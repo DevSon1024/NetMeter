@@ -110,6 +110,7 @@ object NetworkStatsMapper {
         }
 
         val primaryPackage = packages[0]
+        val sharedList = packages.toList()
         return try {
             val appInfo = packageManager.getApplicationInfo(primaryPackage, 0)
             val appName = packageManager.getApplicationLabel(appInfo).toString()
@@ -121,7 +122,8 @@ object NetworkStatsMapper {
                 rxBytes = rxBytes,
                 txBytes = txBytes,
                 networkType = networkType,
-                isSystemApp = isSystem
+                isSystemApp = isSystem,
+                sharedPackages = sharedList
             )
         } catch (_: Exception) {
             AppUsage(
@@ -131,7 +133,8 @@ object NetworkStatsMapper {
                 rxBytes = rxBytes,
                 txBytes = txBytes,
                 networkType = networkType,
-                isSystemApp = false
+                isSystemApp = false,
+                sharedPackages = sharedList
             )
         }
     }

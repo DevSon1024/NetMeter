@@ -7,7 +7,8 @@ data class AppUsage(
     val rxBytes: Long,
     val txBytes: Long,
     val networkType: NetworkType,
-    val isSystemApp: Boolean = false
+    val isSystemApp: Boolean = false,
+    val sharedPackages: List<String> = emptyList()
 ) {
     val totalBytes: Long
         get() = rxBytes + txBytes
