@@ -17,3 +17,5 @@ local.properties
 *.jks
 /*.txt
 /*.log
+.kotlin
+*.properties
