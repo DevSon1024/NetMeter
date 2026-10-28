@@ -19,3 +19,4 @@ local.properties
 /*.log
 .kotlin
 *.properties
+update_details.md
