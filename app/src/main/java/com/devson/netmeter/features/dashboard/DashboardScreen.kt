@@ -36,11 +36,14 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.devson.netmeter.core.permission.UsagePermissionViewModel
+import com.devson.netmeter.core.ui.UsagePermissionSection
 
 @Composable
 fun DashboardScreen(
     modifier: Modifier = Modifier,
-    viewModel: DashboardViewModel = viewModel()
+    viewModel: DashboardViewModel = viewModel(),
+    permissionViewModel: UsagePermissionViewModel = viewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
@@ -51,6 +54,8 @@ fun DashboardScreen(
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
+        // Usage Access Permission Status & Onboarding Banner
+        UsagePermissionSection(viewModel = permissionViewModel)
         // Hero Live Meter Card
         ElevatedCard(
             modifier = Modifier.fillMaxWidth(),

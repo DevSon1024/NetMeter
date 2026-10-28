@@ -5,6 +5,7 @@ import androidx.compose.ui.Modifier
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import com.devson.netmeter.core.permission.UsagePermissionViewModel
 import com.devson.netmeter.features.appusage.AppUsageScreen
 import com.devson.netmeter.features.dashboard.DashboardScreen
 import com.devson.netmeter.features.history.HistoryScreen
@@ -16,6 +17,7 @@ import com.devson.netmeter.features.speedtest.SpeedTestScreen
 fun AppNavigation(
     navController: NavHostController,
     settingsViewModel: SettingsViewModel,
+    permissionViewModel: UsagePermissionViewModel,
     modifier: Modifier = Modifier
 ) {
     NavHost(
@@ -24,10 +26,10 @@ fun AppNavigation(
         modifier = modifier
     ) {
         composable(Screen.Dashboard.route) {
-            DashboardScreen()
+            DashboardScreen(permissionViewModel = permissionViewModel)
         }
         composable(Screen.AppUsage.route) {
-            AppUsageScreen()
+            AppUsageScreen(permissionViewModel = permissionViewModel)
         }
         composable(Screen.History.route) {
             HistoryScreen()

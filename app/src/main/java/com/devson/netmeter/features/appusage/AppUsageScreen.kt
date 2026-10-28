@@ -31,10 +31,14 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 
+import com.devson.netmeter.core.permission.UsagePermissionViewModel
+import com.devson.netmeter.core.ui.UsagePermissionSection
+
 @Composable
 fun AppUsageScreen(
     modifier: Modifier = Modifier,
-    viewModel: AppUsageViewModel = viewModel()
+    viewModel: AppUsageViewModel = viewModel(),
+    permissionViewModel: UsagePermissionViewModel = viewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
@@ -43,6 +47,10 @@ fun AppUsageScreen(
             .fillMaxSize()
             .padding(16.dp)
     ) {
+        // Usage Permission Status & Onboarding Banner
+        UsagePermissionSection(viewModel = permissionViewModel)
+
+        Spacer(modifier = Modifier.height(12.dp))
         // Period Filter Chips
         Row(
             modifier = Modifier.fillMaxWidth(),

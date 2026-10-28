@@ -21,12 +21,14 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.devson.netmeter.core.navigation.AppNavigation
 import com.devson.netmeter.core.navigation.Screen
+import com.devson.netmeter.core.permission.UsagePermissionViewModel
 import com.devson.netmeter.features.settings.SettingsViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun NetMeterApp(
     settingsViewModel: SettingsViewModel,
+    permissionViewModel: UsagePermissionViewModel,
     navController: NavHostController = rememberNavController()
 ) {
     val navBackStackEntry by navController.currentBackStackEntryAsState()
@@ -87,6 +89,7 @@ fun NetMeterApp(
         AppNavigation(
             navController = navController,
             settingsViewModel = settingsViewModel,
+            permissionViewModel = permissionViewModel,
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
