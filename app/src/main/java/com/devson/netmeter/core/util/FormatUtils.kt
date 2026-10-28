@@ -1,5 +1,7 @@
 package com.devson.netmeter.core.util
 
+import java.text.SimpleDateFormat
+import java.util.Date
 import java.util.Locale
 
 object FormatUtils {
@@ -20,4 +22,22 @@ object FormatUtils {
             else -> "$bytes B"
         }
     }
+
+    fun formatTime(timeMillis: Long): String {
+        val sdf = SimpleDateFormat("h:mm:ss a", Locale.getDefault())
+        return sdf.format(Date(timeMillis))
+    }
+
+    fun formatDate(timeMillis: Long): String {
+        val sdf = SimpleDateFormat("EEE, MMM d", Locale.getDefault())
+        return sdf.format(Date(timeMillis))
+    }
+
+    fun formatTimeRange(startMillis: Long, endMillis: Long): String {
+        val timeFormat = SimpleDateFormat("h:mm a", Locale.getDefault())
+        val startFormatted = timeFormat.format(Date(startMillis))
+        val endFormatted = timeFormat.format(Date(endMillis))
+        return "$startFormatted - $endFormatted"
+    }
 }
+

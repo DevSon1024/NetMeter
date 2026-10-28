@@ -2,6 +2,7 @@ package com.devson.netmeter.core.navigation
 
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -26,7 +27,18 @@ fun AppNavigation(
         modifier = modifier
     ) {
         composable(Screen.Dashboard.route) {
-            DashboardScreen(permissionViewModel = permissionViewModel)
+            DashboardScreen(
+                permissionViewModel = permissionViewModel,
+                onNavigateToScreen = { route ->
+                    navController.navigate(route) {
+                        popUpTo(navController.graph.findStartDestination().id) {
+                            saveState = true
+                        }
+                        launchSingleTop = true
+                        restoreState = true
+                    }
+                }
+            )
         }
         composable(Screen.AppUsage.route) {
             AppUsageScreen(permissionViewModel = permissionViewModel)
