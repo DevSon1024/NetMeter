@@ -44,7 +44,7 @@ fun AppNavigation(
             AppUsageScreen(permissionViewModel = permissionViewModel)
         }
         composable(Screen.History.route) {
-            HistoryScreen()
+            HistoryScreen(permissionViewModel = permissionViewModel)
         }
         composable(Screen.SpeedTest.route) {
             SpeedTestScreen()
