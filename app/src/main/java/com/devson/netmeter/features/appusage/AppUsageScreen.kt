@@ -35,6 +35,7 @@ import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.CloudQueue
 import androidx.compose.material.icons.filled.Error
 import androidx.compose.material.icons.filled.Group
+import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Public
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Search
@@ -60,6 +61,9 @@ import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.SuggestionChip
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -71,8 +75,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.sp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -92,6 +98,7 @@ fun AppUsageScreen(
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val permissionStatus by permissionViewModel.permissionStatus.collectAsStateWithLifecycle()
+    var unresolvableItemForDialog by remember { mutableStateOf<AppUsageDisplayItem?>(null) }
 
     LaunchedEffect(permissionStatus) {
         if (permissionStatus == UsagePermissionStatus.Granted) {
@@ -423,11 +430,77 @@ fun AppUsageScreen(
                         AppUsageItemCard(
                             app = app,
                             metric = uiState.sortOrder,
-                            onInspectApp = onInspectApp
+                            onInspectApp = onInspectApp,
+                            onShowTrafficInfo = { unresolvableItemForDialog = it }
                         )
                     }
                 }
             }
+        }
+
+        if (unresolvableItemForDialog != null) {
+            val item = unresolvableItemForDialog!!
+            AlertDialog(
+                onDismissRequest = { unresolvableItemForDialog = null },
+                icon = {
+                    Icon(
+                        imageVector = if (item.isSystemApp) Icons.Default.Android else Icons.Default.Info,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.size(28.dp)
+                    )
+                },
+                title = {
+                    Text(
+                        text = item.appName,
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold
+                    )
+                },
+                text = {
+                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        val description = when (item.uid) {
+                            0 -> "Android OS Kernel traffic includes low-level network routing, firewall rules, and core OS socket communication."
+                            -4 -> "Network traffic consumed by applications that were uninstalled from this device during the selected time period."
+                            -5 -> "Data used while sharing your network connection via Wi-Fi hotspot, USB, or Bluetooth tethering."
+                            in 0 until 10000 -> "Internal Android system daemon or service (UID ${item.uid}) that runs without a standalone user application."
+                            else -> "Data consumed by an application or process (UID ${item.uid}) that has been uninstalled or has restricted package access."
+                        }
+                        Text(
+                            text = description,
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Text("Total Traffic", style = MaterialTheme.typography.labelMedium)
+                            Text(item.totalFormatted, style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold)
+                        }
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Text("Downloaded", style = MaterialTheme.typography.labelMedium)
+                            Text(item.rxFormatted, style = MaterialTheme.typography.labelMedium)
+                        }
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Text("Uploaded", style = MaterialTheme.typography.labelMedium)
+                            Text(item.txFormatted, style = MaterialTheme.typography.labelMedium)
+                        }
+                    }
+                },
+                confirmButton = {
+                    TextButton(onClick = { unresolvableItemForDialog = null }) {
+                        Text("Close")
+                    }
+                }
+            )
         }
     }
 }
@@ -436,23 +509,33 @@ fun AppUsageScreen(
 private fun AppUsageItemCard(
     app: AppUsageDisplayItem,
     metric: AppUsageSortOrder,
-    onInspectApp: (String) -> Unit
+    onInspectApp: (String) -> Unit,
+    onShowTrafficInfo: (AppUsageDisplayItem) -> Unit
 ) {
     ElevatedCard(
         modifier = Modifier
             .fillMaxWidth()
-            .then(
+            .clip(RoundedCornerShape(14.dp))
+            .clickable {
                 if (app.packageName != null) {
-                    Modifier.clickable { onInspectApp(app.packageName) }
+                    onInspectApp(app.packageName)
                 } else {
-                    Modifier
+                    onShowTrafficInfo(app)
                 }
-            )
+            },
+        shape = RoundedCornerShape(14.dp),
+        colors = CardDefaults.elevatedCardColors(
+            containerColor = MaterialTheme.colorScheme.surface
+        ),
+        elevation = CardDefaults.elevatedCardElevation(
+            defaultElevation = 1.dp,
+            pressedElevation = 3.dp
+        )
     ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(12.dp)
+                .padding(horizontal = 14.dp, vertical = 11.dp)
         ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -461,7 +544,7 @@ private fun AppUsageItemCard(
                 AppIcon(
                     packageName = app.packageName,
                     isSystemApp = app.isSystemApp,
-                    modifier = Modifier.size(38.dp)
+                    modifier = Modifier.size(40.dp)
                 )
 
                 Spacer(modifier = Modifier.width(12.dp))
@@ -469,8 +552,11 @@ private fun AppUsageItemCard(
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
                         text = app.appName,
-                        style = MaterialTheme.typography.bodyLarge,
-                        fontWeight = FontWeight.SemiBold,
+                        style = MaterialTheme.typography.titleMedium.copy(
+                            fontWeight = FontWeight.SemiBold,
+                            fontSize = 15.sp
+                        ),
+                        color = MaterialTheme.colorScheme.onSurface,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis
                     )
@@ -494,14 +580,29 @@ private fun AppUsageItemCard(
                         } else if (app.packageName != null) {
                             Text(
                                 text = app.packageName,
-                                style = MaterialTheme.typography.labelSmall,
+                                style = MaterialTheme.typography.bodySmall.copy(
+                                    fontFamily = FontFamily.Monospace,
+                                    fontSize = 11.sp
+                                ),
                                 color = MaterialTheme.colorScheme.outline,
                                 maxLines = 1,
                                 overflow = TextOverflow.Ellipsis
                             )
+                        } else {
+                            Text(
+                                text = "UID ${app.uid}",
+                                style = MaterialTheme.typography.bodySmall.copy(
+                                    fontFamily = FontFamily.Monospace,
+                                    fontSize = 11.sp
+                                ),
+                                color = MaterialTheme.colorScheme.outline.copy(alpha = 0.7f),
+                                maxLines = 1
+                            )
                         }
                     }
                 }
+
+                Spacer(modifier = Modifier.width(8.dp))
 
                 Column(horizontalAlignment = Alignment.End) {
                     val primaryValue = when (metric) {
@@ -554,13 +655,25 @@ private fun AppUsageItemCard(
                         }
                     }
                 }
+
+                Spacer(modifier = Modifier.width(6.dp))
+
+                Icon(
+                    imageVector = Icons.AutoMirrored.Filled.ArrowForward,
+                    contentDescription = "Open details",
+                    tint = MaterialTheme.colorScheme.outlineVariant,
+                    modifier = Modifier.size(16.dp)
+                )
             }
 
             Spacer(modifier = Modifier.height(8.dp))
 
             LinearProgressIndicator(
                 progress = { app.percentageOfTotal },
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(4.dp)
+                    .clip(RoundedCornerShape(2.dp))
             )
         }
     }
@@ -592,19 +705,32 @@ private fun AppIcon(
         }
     }
 
-    if (imageBitmap != null) {
-        Image(
-            bitmap = imageBitmap,
-            contentDescription = null,
-            modifier = modifier
-        )
-    } else {
-        Icon(
-            imageVector = if (isSystemApp) Icons.Default.Android else Icons.Default.Apps,
-            contentDescription = null,
-            modifier = modifier,
-            tint = MaterialTheme.colorScheme.primary
-        )
+    Surface(
+        shape = RoundedCornerShape(10.dp),
+        color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.45f),
+        modifier = modifier
+    ) {
+        Box(
+            modifier = Modifier.fillMaxSize(),
+            contentAlignment = Alignment.Center
+        ) {
+            if (imageBitmap != null) {
+                Image(
+                    bitmap = imageBitmap,
+                    contentDescription = null,
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .clip(RoundedCornerShape(8.dp))
+                )
+            } else {
+                Icon(
+                    imageVector = if (isSystemApp) Icons.Default.Android else Icons.Default.Apps,
+                    contentDescription = null,
+                    modifier = Modifier.size(24.dp),
+                    tint = MaterialTheme.colorScheme.primary
+                )
+            }
+        }
     }
 }
 
