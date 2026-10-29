@@ -3,6 +3,7 @@ package com.devson.netmeter.features.appusage
 import android.graphics.Bitmap
 import androidx.core.graphics.createBitmap
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -68,7 +69,8 @@ import com.devson.netmeter.core.util.AppUsagePeriod
 fun AppUsageScreen(
     modifier: Modifier = Modifier,
     viewModel: AppUsageViewModel = viewModel(),
-    permissionViewModel: UsagePermissionViewModel = viewModel()
+    permissionViewModel: UsagePermissionViewModel = viewModel(),
+    onInspectApp: (String) -> Unit = {}
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val permissionStatus by permissionViewModel.permissionStatus.collectAsStateWithLifecycle()
@@ -416,7 +418,10 @@ fun AppUsageScreen(
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     items(state.items, key = { it.uid }) { app ->
-                        AppUsageItemCard(app = app)
+                        AppUsageItemCard(
+                            app = app,
+                            onInspectApp = onInspectApp
+                        )
                     }
                 }
             }
@@ -425,9 +430,20 @@ fun AppUsageScreen(
 }
 
 @Composable
-private fun AppUsageItemCard(app: AppUsageDisplayItem) {
+private fun AppUsageItemCard(
+    app: AppUsageDisplayItem,
+    onInspectApp: (String) -> Unit
+) {
     ElevatedCard(
-        modifier = Modifier.fillMaxWidth()
+        modifier = Modifier
+            .fillMaxWidth()
+            .then(
+                if (app.packageName != null) {
+                    Modifier.clickable { onInspectApp(app.packageName) }
+                } else {
+                    Modifier
+                }
+            )
     ) {
         Column(
             modifier = Modifier

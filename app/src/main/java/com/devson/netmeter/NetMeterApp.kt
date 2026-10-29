@@ -24,6 +24,12 @@ import com.devson.netmeter.core.navigation.Screen
 import com.devson.netmeter.core.permission.UsagePermissionViewModel
 import com.devson.netmeter.features.settings.SettingsViewModel
 
+import androidx.compose.foundation.layout.size
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material3.IconButton
+import androidx.compose.ui.unit.dp
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun NetMeterApp(
@@ -33,16 +39,34 @@ fun NetMeterApp(
 ) {
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route ?: Screen.Dashboard.route
-    val currentScreen = Screen.bottomNavScreens.find { it.route == currentRoute } ?: Screen.Dashboard
+    val currentTitle = when {
+        currentRoute == Screen.AppInspector.route -> Screen.AppInspector.title
+        currentRoute.startsWith("app_inspector_detail") -> Screen.AppInspectorDetail.title
+        else -> (Screen.bottomNavScreens.find { it.route == currentRoute } ?: Screen.Dashboard).title
+    }
+    val canNavigateBack = currentRoute == Screen.AppInspector.route || currentRoute.startsWith("app_inspector_detail")
 
     Scaffold(
         topBar = {
             CenterAlignedTopAppBar(
                 title = {
                     Text(
-                        text = currentScreen.title,
+                        text = currentTitle,
                         fontWeight = FontWeight.SemiBold
                     )
+                },
+                navigationIcon = {
+                    if (canNavigateBack) {
+                        IconButton(
+                            onClick = { navController.popBackStack() },
+                            modifier = Modifier.size(48.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                                contentDescription = "Navigate back"
+                            )
+                        }
+                    }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.surface,

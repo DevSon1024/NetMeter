@@ -14,6 +14,11 @@ import com.devson.netmeter.features.settings.SettingsScreen
 import com.devson.netmeter.features.settings.SettingsViewModel
 import com.devson.netmeter.features.speedtest.SpeedTestScreen
 
+import androidx.navigation.NavType
+import androidx.navigation.navArgument
+import com.devson.netmeter.features.appinspector.AppDetailScreen
+import com.devson.netmeter.features.appinspector.AppInspectorScreen
+
 @Composable
 fun AppNavigation(
     navController: NavHostController,
@@ -41,7 +46,12 @@ fun AppNavigation(
             )
         }
         composable(Screen.AppUsage.route) {
-            AppUsageScreen(permissionViewModel = permissionViewModel)
+            AppUsageScreen(
+                permissionViewModel = permissionViewModel,
+                onInspectApp = { packageName ->
+                    navController.navigate(Screen.AppInspectorDetail.createRoute(packageName))
+                }
+            )
         }
         composable(Screen.History.route) {
             HistoryScreen(permissionViewModel = permissionViewModel)
@@ -50,7 +60,30 @@ fun AppNavigation(
             SpeedTestScreen()
         }
         composable(Screen.Settings.route) {
-            SettingsScreen(viewModel = settingsViewModel)
+            SettingsScreen(
+                viewModel = settingsViewModel,
+                onNavigateToInspector = {
+                    navController.navigate(Screen.AppInspector.route)
+                }
+            )
+        }
+        composable(Screen.AppInspector.route) {
+            AppInspectorScreen(
+                onAppSelected = { packageName ->
+                    navController.navigate(Screen.AppInspectorDetail.createRoute(packageName))
+                }
+            )
+        }
+        composable(
+            route = Screen.AppInspectorDetail.route,
+            arguments = listOf(navArgument("packageName") { type = NavType.StringType })
+        ) { backStackEntry ->
+            val encodedPackageName = backStackEntry.arguments?.getString("packageName").orEmpty()
+            val packageName = android.net.Uri.decode(encodedPackageName)
+            AppDetailScreen(
+                packageName = packageName,
+                onNavigateBack = { navController.popBackStack() }
+            )
         }
     }
 }

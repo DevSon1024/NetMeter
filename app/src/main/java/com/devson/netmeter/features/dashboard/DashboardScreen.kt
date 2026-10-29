@@ -34,6 +34,7 @@ import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.Lan
 import androidx.compose.material.icons.filled.NetworkCheck
 import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.SignalWifiBad
 import androidx.compose.material.icons.filled.VpnKey
 import androidx.compose.material.icons.filled.Wifi
@@ -788,6 +789,13 @@ private fun NavigationShortcutsSection(
             subtitle = "Verify network latency, download and upload speeds",
             icon = Icons.Default.NetworkCheck,
             onClick = { onNavigate(Screen.SpeedTest.route) }
+        )
+
+        ShortcutNavigationCard(
+            title = "App Inspector",
+            subtitle = "Search installed packages, permissions, and storage info",
+            icon = Icons.Default.Search,
+            onClick = { onNavigate(Screen.AppInspector.route) }
         )
     }
 }

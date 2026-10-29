@@ -39,5 +39,11 @@ object FormatUtils {
         val endFormatted = timeFormat.format(Date(endMillis))
         return "$startFormatted - $endFormatted"
     }
+
+    fun formatDateTime(timeMillis: Long): String {
+        if (timeMillis <= 0L) return "N/A"
+        val sdf = SimpleDateFormat("MMM d, yyyy, h:mm a", Locale.getDefault())
+        return sdf.format(Date(timeMillis))
+    }
 }
 

@@ -4,6 +4,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.DataUsage
 import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.NetworkCheck
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Speed
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -45,6 +46,20 @@ sealed class Screen(
         title = "Settings",
         icon = Icons.Default.Settings
     )
+
+    data object AppInspector : Screen(
+        route = "app_inspector",
+        title = "App Inspector",
+        icon = Icons.Default.Search
+    )
+
+    data object AppInspectorDetail : Screen(
+        route = "app_inspector_detail/{packageName}",
+        title = "App Details",
+        icon = Icons.Default.Search
+    ) {
+        fun createRoute(packageName: String): String = "app_inspector_detail/${android.net.Uri.encode(packageName)}"
+    }
 
     companion object {
         val bottomNavScreens: List<Screen>
