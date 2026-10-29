@@ -233,7 +233,6 @@ class SpeedTestViewModel @JvmOverloads constructor(
     }
 
     override fun onCleared() {
-        super.onCleared()
         // Prevent orphaned network sockets when ViewModel is cleared
         activeTestJob?.cancel()
     }

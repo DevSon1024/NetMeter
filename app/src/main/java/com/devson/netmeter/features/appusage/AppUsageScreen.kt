@@ -1,6 +1,7 @@
 package com.devson.netmeter.features.appusage
 
 import android.graphics.Bitmap
+import androidx.core.graphics.createBitmap
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
@@ -527,7 +528,7 @@ private fun AppIcon(
                 val drawable = context.packageManager.getApplicationIcon(packageName)
                 val width = drawable.intrinsicWidth.coerceAtLeast(48).coerceAtMost(128)
                 val height = drawable.intrinsicHeight.coerceAtLeast(48).coerceAtMost(128)
-                val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
+                val bitmap = createBitmap(width, height)
                 val canvas = android.graphics.Canvas(bitmap)
                 drawable.setBounds(0, 0, canvas.width, canvas.height)
                 drawable.draw(canvas)
