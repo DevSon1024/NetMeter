@@ -1,7 +1,7 @@
 package com.devson.netmeter.features.appinspector
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -15,44 +15,62 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.automirrored.filled.OpenInNew
 import androidx.compose.material.icons.filled.Android
+import androidx.compose.material.icons.filled.Apps
+import androidx.compose.material.icons.filled.ArrowDropDown
+import androidx.compose.material.icons.filled.ArrowDropUp
+import androidx.compose.material.icons.filled.CalendarMonth
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Clear
+import androidx.compose.material.icons.filled.Code
 import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.FilterList
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.SortByAlpha
+import androidx.compose.material.icons.filled.Update
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.ui.draw.clip
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ElevatedCard
-import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.SuggestionChip
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.core.graphics.createBitmap
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -79,88 +97,72 @@ fun AppInspectorScreen(
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(horizontal = 16.dp, vertical = 8.dp),
+                .padding(start = 16.dp, end = 16.dp, top = 6.dp, bottom = 0.dp),
             verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
-            // Search Bar
+            // Search Bar (Curvy Cylinder design)
             OutlinedTextField(
                 value = uiState.searchQuery,
                 onValueChange = { viewModel.updateSearchQuery(it) },
                 modifier = Modifier.fillMaxWidth(),
-                placeholder = { Text("Search by name or package...") },
+                placeholder = {
+                    Text(
+                        text = "Search by name or package...",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
+                    )
+                },
                 leadingIcon = {
                     Icon(
                         imageVector = Icons.Default.Search,
-                        contentDescription = "Search"
+                        contentDescription = "Search",
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.size(20.dp)
                     )
                 },
                 trailingIcon = {
                     if (uiState.searchQuery.isNotEmpty()) {
                         IconButton(
                             onClick = { viewModel.updateSearchQuery("") },
-                            modifier = Modifier.size(48.dp)
+                            modifier = Modifier.size(36.dp)
                         ) {
                             Icon(
                                 imageVector = Icons.Default.Clear,
-                                contentDescription = "Clear search"
+                                contentDescription = "Clear search",
+                                modifier = Modifier.size(18.dp)
                             )
                         }
                     } else {
                         IconButton(
                             onClick = { viewModel.loadInstalledApps(isRefresh = true) },
-                            modifier = Modifier.size(48.dp)
+                            modifier = Modifier.size(36.dp)
                         ) {
                             Icon(
                                 imageVector = Icons.Default.Refresh,
-                                contentDescription = "Refresh list"
+                                contentDescription = "Refresh list",
+                                modifier = Modifier.size(18.dp)
                             )
                         }
                     }
                 },
-                singleLine = true
+                singleLine = true,
+                shape = RoundedCornerShape(percent = 50),
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedBorderColor = MaterialTheme.colorScheme.primary,
+                    unfocusedBorderColor = MaterialTheme.colorScheme.outlineVariant,
+                    focusedContainerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.35f),
+                    unfocusedContainerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.2f)
+                ),
+                textStyle = MaterialTheme.typography.bodyMedium
             )
 
-            // Filter Chips Row
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .horizontalScroll(rememberScrollState()),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                AppFilterType.entries.forEach { filter ->
-                    FilterChip(
-                        selected = uiState.filterType == filter,
-                        onClick = { viewModel.updateFilterType(filter) },
-                        label = { Text(filter.label) },
-                        leadingIcon = if (filter == AppFilterType.ALL) {
-                            { Icon(Icons.Default.FilterList, contentDescription = null, modifier = Modifier.size(16.dp)) }
-                        } else null
-                    )
-                }
-            }
-
-            // Sort Chips Row
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .horizontalScroll(rememberScrollState()),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = "Sort:",
-                    style = MaterialTheme.typography.labelMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-                AppSortOrder.entries.forEach { sort ->
-                    FilterChip(
-                        selected = uiState.sortOrder == sort,
-                        onClick = { viewModel.updateSortOrder(sort) },
-                        label = { Text(sort.label) }
-                    )
-                }
-            }
+            // Dropdown Filters: App Type & Sort Order
+            AppInspectorFilterSection(
+                selectedFilter = uiState.filterType,
+                onFilterSelected = { viewModel.updateFilterType(it) },
+                selectedSort = uiState.sortOrder,
+                onSortSelected = { viewModel.updateSortOrder(it) }
+            )
 
             // Content Area
             when (val state = uiState.listState) {
@@ -506,5 +508,242 @@ fun InspectorAppIcon(
             tint = MaterialTheme.colorScheme.primary,
             modifier = modifier
         )
+    }
+}
+
+@Composable
+private fun AppInspectorFilterSection(
+    selectedFilter: AppFilterType,
+    onFilterSelected: (AppFilterType) -> Unit,
+    selectedSort: AppSortOrder,
+    onSortSelected: (AppSortOrder) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Row(
+        modifier = modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        AppInspectorFilterDropdown(
+            selectedFilter = selectedFilter,
+            onFilterSelected = onFilterSelected,
+            modifier = Modifier.weight(1f)
+        )
+        AppInspectorSortDropdown(
+            selectedSort = selectedSort,
+            onSortSelected = onSortSelected,
+            modifier = Modifier.weight(1f)
+        )
+    }
+}
+
+@Composable
+private fun AppInspectorFilterDropdown(
+    selectedFilter: AppFilterType,
+    onFilterSelected: (AppFilterType) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    fun displayLabel(filter: AppFilterType): String = when (filter) {
+        AppFilterType.ALL -> "All Apps"
+        AppFilterType.USER -> "User Apps"
+        AppFilterType.SYSTEM -> "System"
+        AppFilterType.LAUNCHABLE -> "Launchable"
+    }
+
+    fun menuLabel(filter: AppFilterType): String = when (filter) {
+        AppFilterType.ALL -> "All Applications"
+        AppFilterType.USER -> "User Applications"
+        AppFilterType.SYSTEM -> "System Applications"
+        AppFilterType.LAUNCHABLE -> "Launchable Apps"
+    }
+
+    fun filterIcon(filter: AppFilterType): ImageVector = when (filter) {
+        AppFilterType.ALL -> Icons.Default.FilterList
+        AppFilterType.USER -> Icons.Default.Apps
+        AppFilterType.SYSTEM -> Icons.Default.Android
+        AppFilterType.LAUNCHABLE -> Icons.AutoMirrored.Filled.OpenInNew
+    }
+
+    InspectorExposedDropdown(
+        label = "App Type",
+        selectedValueText = displayLabel(selectedFilter),
+        selectedItem = selectedFilter,
+        items = AppFilterType.entries,
+        itemLabel = ::menuLabel,
+        onItemSelected = onFilterSelected,
+        itemIcon = ::filterIcon,
+        modifier = modifier
+    )
+}
+
+@Composable
+private fun AppInspectorSortDropdown(
+    selectedSort: AppSortOrder,
+    onSortSelected: (AppSortOrder) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    fun displayLabel(sort: AppSortOrder): String = when (sort) {
+        AppSortOrder.NAME_ASC -> "Name (A-Z)"
+        AppSortOrder.NAME_DESC -> "Name (Z-A)"
+        AppSortOrder.PACKAGE_ASC -> "Package"
+        AppSortOrder.UPDATED_DESC -> "Recent Update"
+    }
+
+    fun menuLabel(sort: AppSortOrder): String = when (sort) {
+        AppSortOrder.NAME_ASC -> "Name (A to Z)"
+        AppSortOrder.NAME_DESC -> "Name (Z to A)"
+        AppSortOrder.PACKAGE_ASC -> "Package Name (A to Z)"
+        AppSortOrder.UPDATED_DESC -> "Recently Updated"
+    }
+
+    fun sortIcon(sort: AppSortOrder): ImageVector = when (sort) {
+        AppSortOrder.NAME_ASC -> Icons.Default.SortByAlpha
+        AppSortOrder.NAME_DESC -> Icons.Default.SortByAlpha
+        AppSortOrder.PACKAGE_ASC -> Icons.Default.Code
+        AppSortOrder.UPDATED_DESC -> Icons.Default.Update
+    }
+
+    InspectorExposedDropdown(
+        label = "Sort By",
+        selectedValueText = displayLabel(selectedSort),
+        selectedItem = selectedSort,
+        items = AppSortOrder.entries,
+        itemLabel = ::menuLabel,
+        onItemSelected = onSortSelected,
+        itemIcon = ::sortIcon,
+        modifier = modifier
+    )
+}
+
+@Composable
+private fun <T> InspectorExposedDropdown(
+    label: String,
+    selectedValueText: String,
+    selectedItem: T,
+    items: List<T>,
+    itemLabel: (T) -> String,
+    onItemSelected: (T) -> Unit,
+    modifier: Modifier = Modifier,
+    itemIcon: ((T) -> ImageVector)? = null
+) {
+    var expanded by remember { mutableStateOf(false) }
+
+    Box(modifier = modifier) {
+        Surface(
+            onClick = { expanded = !expanded },
+            modifier = Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(10.dp)),
+            shape = RoundedCornerShape(10.dp),
+            border = BorderStroke(
+                width = 1.dp,
+                color = if (expanded) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline.copy(alpha = 0.4f)
+            ),
+            color = if (expanded) {
+                MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.15f)
+            } else {
+                MaterialTheme.colorScheme.surface
+            }
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 8.dp, vertical = 6.dp)
+            ) {
+                Text(
+                    text = label,
+                    style = MaterialTheme.typography.labelSmall.copy(
+                        fontSize = 10.sp,
+                        fontWeight = FontWeight.SemiBold
+                    ),
+                    color = if (expanded) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+                Spacer(modifier = Modifier.height(2.dp))
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Text(
+                        text = selectedValueText,
+                        style = MaterialTheme.typography.bodySmall.copy(
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.SemiBold
+                        ),
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.weight(1f, fill = false)
+                    )
+                    Icon(
+                        imageVector = if (expanded) Icons.Default.ArrowDropUp else Icons.Default.ArrowDropDown,
+                        contentDescription = null,
+                        modifier = Modifier.size(16.dp),
+                        tint = if (expanded) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
+        }
+
+        DropdownMenu(
+            expanded = expanded,
+            onDismissRequest = { expanded = false },
+            modifier = Modifier
+                .background(MaterialTheme.colorScheme.surface)
+                .padding(vertical = 4.dp),
+            shape = RoundedCornerShape(12.dp)
+        ) {
+            items.forEach { item ->
+                val isSelected = item == selectedItem
+                DropdownMenuItem(
+                    text = {
+                        Text(
+                            text = itemLabel(item),
+                            style = MaterialTheme.typography.bodyMedium,
+                            fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal,
+                            color = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
+                        )
+                    },
+                    onClick = {
+                        onItemSelected(item)
+                        expanded = false
+                    },
+                    leadingIcon = itemIcon?.let { iconProvider ->
+                        {
+                            Icon(
+                                imageVector = iconProvider(item),
+                                contentDescription = null,
+                                modifier = Modifier.size(18.dp),
+                                tint = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    },
+                    trailingIcon = if (isSelected) {
+                        {
+                            Icon(
+                                imageVector = Icons.Default.Check,
+                                contentDescription = "Selected",
+                                modifier = Modifier.size(16.dp),
+                                tint = MaterialTheme.colorScheme.primary
+                            )
+                        }
+                    } else null,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 6.dp, vertical = 2.dp)
+                        .clip(RoundedCornerShape(8.dp))
+                        .then(
+                            if (isSelected) {
+                                Modifier.background(
+                                    color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.35f),
+                                    shape = RoundedCornerShape(8.dp)
+                                )
+                            } else Modifier
+                        ),
+                    contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp)
+                )
+            }
+        }
     }
 }

@@ -214,15 +214,18 @@ class AndroidAppInfoRepository(
                         }
                     }
                 }
+                val isMajor = isMajorPermission(permName)
                 AppPermission(
                     name = permName,
                     label = label,
                     description = description,
                     isGranted = isGranted,
-                    type = type
+                    type = type,
+                    isMajor = isMajor
                 )
             }.sortedWith(
-                compareByDescending<AppPermission> { it.type == PermissionType.RUNTIME }
+                compareByDescending<AppPermission> { it.isMajor }
+                    .thenByDescending { it.type == PermissionType.RUNTIME }
                     .thenByDescending { it.isGranted }
                     .thenBy { it.name }
             )
@@ -268,5 +271,30 @@ class AndroidAppInfoRepository(
         } catch (e: Exception) {
             Result.failure(e)
         }
+    }
+
+    private fun isMajorPermission(permName: String): Boolean {
+        val upper = permName.uppercase()
+        return upper.contains("CAMERA") ||
+            upper.contains("STORAGE") ||
+            upper.contains("MEDIA") ||
+            upper.contains("VIBRAT") ||
+            upper.contains("LOCATION") ||
+            upper.contains("RECORD_AUDIO") ||
+            upper.contains("MICROPHONE") ||
+            upper.contains("PHONE") ||
+            upper.contains("CALL") ||
+            upper.contains("SMS") ||
+            upper.contains("CONTACT") ||
+            upper.contains("CALENDAR") ||
+            upper.contains("NOTIFICATION") ||
+            upper.contains("BLUETOOTH") ||
+            upper.contains("SENSOR") ||
+            upper.contains("ACTIVITY_RECOGNITION") ||
+            upper.contains("BIOMETRIC") ||
+            upper.contains("FINGERPRINT") ||
+            upper.contains("SYSTEM_ALERT_WINDOW") ||
+            upper.contains("INSTALL_PACKAGES") ||
+            upper.contains("USAGE_STATS")
     }
 }

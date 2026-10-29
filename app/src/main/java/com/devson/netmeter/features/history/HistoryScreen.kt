@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -113,7 +114,7 @@ fun HistoryScreen(
     LazyColumn(
         modifier = modifier
             .fillMaxSize()
-            .padding(horizontal = 16.dp, vertical = 12.dp),
+            .padding(start = 16.dp, end = 16.dp, top = 6.dp, bottom = 0.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         // Top Header
@@ -225,10 +226,6 @@ fun HistoryScreen(
                     onClick = { viewModel.selectRecord(originalIndex) }
                 )
             }
-        }
-
-        item {
-            Spacer(modifier = Modifier.height(24.dp))
         }
     }
 }

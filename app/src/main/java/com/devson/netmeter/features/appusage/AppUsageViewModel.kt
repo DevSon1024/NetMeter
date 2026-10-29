@@ -230,9 +230,18 @@ class AppUsageViewModel @JvmOverloads constructor(
                 AppUsageSortOrder.NAME_ASC -> filtered.sortedBy { (it.appName ?: "").lowercase() }
             }
 
-            val maxTotal = maxOf(1L, grandTotalBytes)
+            val maxMetric = when (sortOrder) {
+                AppUsageSortOrder.DOWNLOAD_DESC -> maxOf(1L, grandTotalRx)
+                AppUsageSortOrder.UPLOAD_DESC -> maxOf(1L, grandTotalTx)
+                else -> maxOf(1L, grandTotalBytes)
+            }
             val displayItems = sorted.map { app ->
-                val ratio = (app.totalBytes.toFloat() / maxTotal).coerceIn(0f, 1f)
+                val metricBytes = when (sortOrder) {
+                    AppUsageSortOrder.DOWNLOAD_DESC -> app.rxBytes
+                    AppUsageSortOrder.UPLOAD_DESC -> app.txBytes
+                    else -> app.totalBytes
+                }
+                val ratio = (metricBytes.toFloat() / maxMetric).coerceIn(0f, 1f)
                 AppUsageDisplayItem(
                     uid = app.uid,
                     packageName = app.packageName,

@@ -2,11 +2,12 @@ package com.devson.netmeter.features.appusage
 
 import android.graphics.Bitmap
 import androidx.core.graphics.createBitmap
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -18,45 +19,62 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.filled.Android
 import androidx.compose.material.icons.filled.Apps
 import androidx.compose.material.icons.filled.ArrowDownward
+import androidx.compose.material.icons.filled.ArrowDropDown
+import androidx.compose.material.icons.filled.ArrowDropUp
 import androidx.compose.material.icons.filled.ArrowUpward
+import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material.icons.filled.CellTower
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.CloudQueue
 import androidx.compose.material.icons.filled.Error
 import androidx.compose.material.icons.filled.Group
+import androidx.compose.material.icons.filled.Public
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.SwapVert
 import androidx.compose.material.icons.filled.Wifi
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.ui.draw.clip
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ElevatedCard
-import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.SuggestionChip
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.devson.netmeter.core.domain.model.NetworkType
@@ -84,106 +102,69 @@ fun AppUsageScreen(
     Column(
         modifier = modifier
             .fillMaxSize()
-            .padding(16.dp)
+            .padding(start = 16.dp, end = 16.dp, top = 6.dp, bottom = 0.dp)
     ) {
         if (permissionStatus != UsagePermissionStatus.Granted) {
             UsagePermissionSection(viewModel = permissionViewModel)
             Spacer(modifier = Modifier.height(12.dp))
         }
 
-        // Search Bar
+        // Search Bar (Curvy Cylinder design)
         OutlinedTextField(
             value = uiState.searchQuery,
             onValueChange = { viewModel.updateSearchQuery(it) },
             modifier = Modifier.fillMaxWidth(),
-            placeholder = { Text("Search apps or packages...") },
+            placeholder = {
+                Text(
+                    text = "Search apps or packages...",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
+                )
+            },
             leadingIcon = {
                 Icon(
                     imageVector = Icons.Default.Search,
-                    contentDescription = "Search"
+                    contentDescription = "Search",
+                    tint = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.size(20.dp)
                 )
             },
             trailingIcon = {
                 if (uiState.searchQuery.isNotEmpty()) {
-                    IconButton(onClick = { viewModel.updateSearchQuery("") }) {
+                    IconButton(
+                        onClick = { viewModel.updateSearchQuery("") },
+                        modifier = Modifier.size(36.dp)
+                    ) {
                         Icon(
                             imageVector = Icons.Default.Clear,
-                            contentDescription = "Clear search"
+                            contentDescription = "Clear search",
+                            modifier = Modifier.size(18.dp)
                         )
                     }
                 }
             },
-            singleLine = true
+            singleLine = true,
+            shape = RoundedCornerShape(percent = 50),
+            colors = OutlinedTextFieldDefaults.colors(
+                focusedBorderColor = MaterialTheme.colorScheme.primary,
+                unfocusedBorderColor = MaterialTheme.colorScheme.outlineVariant,
+                focusedContainerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.35f),
+                unfocusedContainerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.2f)
+            ),
+            textStyle = MaterialTheme.typography.bodyMedium
         )
 
-        Spacer(modifier = Modifier.height(8.dp))
+        Spacer(modifier = Modifier.height(10.dp))
 
-        // Time Period Filter Chips
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .horizontalScroll(rememberScrollState()),
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            AppUsagePeriod.entries.forEach { period ->
-                FilterChip(
-                    selected = uiState.selectedPeriod == period,
-                    onClick = { viewModel.selectPeriod(period) },
-                    label = { Text(period.label) }
-                )
-            }
-        }
-
-        Spacer(modifier = Modifier.height(6.dp))
-
-        // Network Type & Sort Filters
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .horizontalScroll(rememberScrollState()),
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            FilterChip(
-                selected = uiState.selectedNetworkType == NetworkType.ALL,
-                onClick = { viewModel.selectNetworkType(NetworkType.ALL) },
-                label = { Text("All Networks") }
-            )
-            FilterChip(
-                selected = uiState.selectedNetworkType == NetworkType.WIFI,
-                onClick = { viewModel.selectNetworkType(NetworkType.WIFI) },
-                label = { Text("Wi-Fi") },
-                leadingIcon = {
-                    Icon(
-                        imageVector = Icons.Default.Wifi,
-                        contentDescription = null,
-                        modifier = Modifier.size(16.dp)
-                    )
-                }
-            )
-            FilterChip(
-                selected = uiState.selectedNetworkType == NetworkType.MOBILE,
-                onClick = { viewModel.selectNetworkType(NetworkType.MOBILE) },
-                label = { Text("Mobile") },
-                leadingIcon = {
-                    Icon(
-                        imageVector = Icons.Default.CellTower,
-                        contentDescription = null,
-                        modifier = Modifier.size(16.dp)
-                    )
-                }
-            )
-
-            Spacer(modifier = Modifier.width(4.dp))
-
-            AppUsageSortOrder.entries.forEach { order ->
-                FilterChip(
-                    selected = uiState.sortOrder == order,
-                    onClick = { viewModel.setSortOrder(order) },
-                    label = { Text(order.label) }
-                )
-            }
-        }
+        // Three Dropdown Filters: Time Period, Network Type, Data Metric
+        AppUsageFilterSection(
+            selectedPeriod = uiState.selectedPeriod,
+            onPeriodSelected = { viewModel.selectPeriod(it) },
+            selectedNetwork = uiState.selectedNetworkType,
+            onNetworkSelected = { viewModel.selectNetworkType(it) },
+            selectedMetric = uiState.sortOrder,
+            onMetricSelected = { viewModel.setSortOrder(it) }
+        )
 
         Spacer(modifier = Modifier.height(10.dp))
 
@@ -346,6 +327,12 @@ fun AppUsageScreen(
 
             is AppUsageContentState.Success -> {
                 // Header Total Summary Card
+                val (primaryHeaderTitle, primaryHeaderValue) = when (uiState.sortOrder) {
+                    AppUsageSortOrder.DOWNLOAD_DESC -> Pair("Total Download (${state.appCount} apps)", state.totalRxFormatted)
+                    AppUsageSortOrder.UPLOAD_DESC -> Pair("Total Upload (${state.appCount} apps)", state.totalTxFormatted)
+                    else -> Pair("Total Traffic (${state.appCount} apps)", state.totalFormatted)
+                }
+
                 ElevatedCard(
                     modifier = Modifier.fillMaxWidth(),
                     colors = CardDefaults.elevatedCardColors(
@@ -359,13 +346,13 @@ fun AppUsageScreen(
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Text(
-                                text = "Total Traffic (${state.appCount} apps)",
+                                text = primaryHeaderTitle,
                                 style = MaterialTheme.typography.titleSmall,
                                 fontWeight = FontWeight.SemiBold,
                                 color = MaterialTheme.colorScheme.onSecondaryContainer
                             )
                             Text(
-                                text = state.totalFormatted,
+                                text = primaryHeaderValue,
                                 style = MaterialTheme.typography.titleMedium,
                                 fontWeight = FontWeight.Bold,
                                 color = MaterialTheme.colorScheme.onSecondaryContainer
@@ -387,7 +374,7 @@ fun AppUsageScreen(
                                 )
                                 Spacer(modifier = Modifier.size(4.dp))
                                 Text(
-                                    text = "Rx: ${state.totalRxFormatted}",
+                                    text = "Dl: ${state.totalRxFormatted}",
                                     style = MaterialTheme.typography.bodySmall
                                 )
                             }
@@ -400,9 +387,24 @@ fun AppUsageScreen(
                                 )
                                 Spacer(modifier = Modifier.size(4.dp))
                                 Text(
-                                    text = "Tx: ${state.totalTxFormatted}",
+                                    text = "Up: ${state.totalTxFormatted}",
                                     style = MaterialTheme.typography.bodySmall
                                 )
+                            }
+                            if (uiState.sortOrder != AppUsageSortOrder.TOTAL_DESC) {
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Icon(
+                                        imageVector = Icons.Default.SwapVert,
+                                        contentDescription = null,
+                                        modifier = Modifier.size(14.dp),
+                                        tint = MaterialTheme.colorScheme.outline
+                                    )
+                                    Spacer(modifier = Modifier.size(4.dp))
+                                    Text(
+                                        text = "Total: ${state.totalFormatted}",
+                                        style = MaterialTheme.typography.bodySmall
+                                    )
+                                }
                             }
                         }
                     }
@@ -420,6 +422,7 @@ fun AppUsageScreen(
                     items(state.items, key = { it.uid }) { app ->
                         AppUsageItemCard(
                             app = app,
+                            metric = uiState.sortOrder,
                             onInspectApp = onInspectApp
                         )
                     }
@@ -432,6 +435,7 @@ fun AppUsageScreen(
 @Composable
 private fun AppUsageItemCard(
     app: AppUsageDisplayItem,
+    metric: AppUsageSortOrder,
     onInspectApp: (String) -> Unit
 ) {
     ElevatedCard(
@@ -467,7 +471,8 @@ private fun AppUsageItemCard(
                         text = app.appName,
                         style = MaterialTheme.typography.bodyLarge,
                         fontWeight = FontWeight.SemiBold,
-                        maxLines = 1
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
                     )
 
                     Row(
@@ -491,32 +496,62 @@ private fun AppUsageItemCard(
                                 text = app.packageName,
                                 style = MaterialTheme.typography.labelSmall,
                                 color = MaterialTheme.colorScheme.outline,
-                                maxLines = 1
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
                             )
                         }
                     }
                 }
 
                 Column(horizontalAlignment = Alignment.End) {
+                    val primaryValue = when (metric) {
+                        AppUsageSortOrder.DOWNLOAD_DESC -> app.rxFormatted
+                        AppUsageSortOrder.UPLOAD_DESC -> app.txFormatted
+                        else -> app.totalFormatted
+                    }
+
                     Text(
-                        text = app.totalFormatted,
+                        text = primaryValue,
                         style = MaterialTheme.typography.bodyLarge,
-                        fontWeight = FontWeight.Bold
+                        fontWeight = FontWeight.Bold,
+                        color = when (metric) {
+                            AppUsageSortOrder.DOWNLOAD_DESC -> MaterialTheme.colorScheme.primary
+                            AppUsageSortOrder.UPLOAD_DESC -> MaterialTheme.colorScheme.secondary
+                            else -> MaterialTheme.colorScheme.onSurface
+                        }
                     )
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(4.dp)
                     ) {
-                        Text(
-                            text = "↓ ${app.rxFormatted}",
-                            style = MaterialTheme.typography.labelSmall,
-                            color = MaterialTheme.colorScheme.outline
-                        )
-                        Text(
-                            text = "↑ ${app.txFormatted}",
-                            style = MaterialTheme.typography.labelSmall,
-                            color = MaterialTheme.colorScheme.outline
-                        )
+                        when (metric) {
+                            AppUsageSortOrder.DOWNLOAD_DESC -> {
+                                Text(
+                                    text = "Total: ${app.totalFormatted} • ↑ ${app.txFormatted}",
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = MaterialTheme.colorScheme.outline
+                                )
+                            }
+                            AppUsageSortOrder.UPLOAD_DESC -> {
+                                Text(
+                                    text = "Total: ${app.totalFormatted} • ↓ ${app.rxFormatted}",
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = MaterialTheme.colorScheme.outline
+                                )
+                            }
+                            else -> {
+                                Text(
+                                    text = "↓ ${app.rxFormatted}",
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = MaterialTheme.colorScheme.outline
+                                )
+                                Text(
+                                    text = "↑ ${app.txFormatted}",
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = MaterialTheme.colorScheme.outline
+                                )
+                            }
+                        }
                     }
                 }
             }
@@ -570,5 +605,274 @@ private fun AppIcon(
             modifier = modifier,
             tint = MaterialTheme.colorScheme.primary
         )
+    }
+}
+
+@Composable
+private fun AppUsageFilterSection(
+    selectedPeriod: AppUsagePeriod,
+    onPeriodSelected: (AppUsagePeriod) -> Unit,
+    selectedNetwork: NetworkType,
+    onNetworkSelected: (NetworkType) -> Unit,
+    selectedMetric: AppUsageSortOrder,
+    onMetricSelected: (AppUsageSortOrder) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val networkOptions = listOf(NetworkType.ALL, NetworkType.MOBILE, NetworkType.WIFI)
+    val metricOptions = listOf(
+        AppUsageSortOrder.TOTAL_DESC,
+        AppUsageSortOrder.DOWNLOAD_DESC,
+        AppUsageSortOrder.UPLOAD_DESC
+    )
+
+    Row(
+        modifier = modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(6.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        PeriodDropdown(
+            selectedPeriod = selectedPeriod,
+            onPeriodSelected = onPeriodSelected,
+            modifier = Modifier.weight(1f)
+        )
+        NetworkDropdown(
+            selectedNetwork = selectedNetwork,
+            networkOptions = networkOptions,
+            onNetworkSelected = onNetworkSelected,
+            modifier = Modifier.weight(1f)
+        )
+        MetricDropdown(
+            selectedMetric = selectedMetric,
+            metricOptions = metricOptions,
+            onMetricSelected = onMetricSelected,
+            modifier = Modifier.weight(1f)
+        )
+    }
+}
+
+@Composable
+private fun PeriodDropdown(
+    selectedPeriod: AppUsagePeriod,
+    onPeriodSelected: (AppUsagePeriod) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    AppUsageExposedDropdown(
+        label = "Period",
+        selectedValueText = selectedPeriod.label,
+        selectedItem = selectedPeriod,
+        items = AppUsagePeriod.entries,
+        itemLabel = { it.label },
+        onItemSelected = onPeriodSelected,
+        modifier = modifier
+    )
+}
+
+@Composable
+private fun NetworkDropdown(
+    selectedNetwork: NetworkType,
+    networkOptions: List<NetworkType>,
+    onNetworkSelected: (NetworkType) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    fun displayLabel(type: NetworkType): String = when (type) {
+        NetworkType.ALL -> "All"
+        NetworkType.MOBILE -> "Mobile"
+        NetworkType.WIFI -> "Wi-Fi"
+    }
+
+    fun menuLabel(type: NetworkType): String = when (type) {
+        NetworkType.ALL -> "All Networks"
+        NetworkType.MOBILE -> "Mobile"
+        NetworkType.WIFI -> "Wi-Fi"
+    }
+
+    fun networkIcon(type: NetworkType): ImageVector = when (type) {
+        NetworkType.ALL -> Icons.Default.Public
+        NetworkType.MOBILE -> Icons.Default.CellTower
+        NetworkType.WIFI -> Icons.Default.Wifi
+    }
+
+    AppUsageExposedDropdown(
+        label = "Network",
+        selectedValueText = displayLabel(selectedNetwork),
+        selectedItem = selectedNetwork,
+        items = networkOptions,
+        itemLabel = ::menuLabel,
+        onItemSelected = onNetworkSelected,
+        itemIcon = ::networkIcon,
+        modifier = modifier
+    )
+}
+
+@Composable
+private fun MetricDropdown(
+    selectedMetric: AppUsageSortOrder,
+    metricOptions: List<AppUsageSortOrder>,
+    onMetricSelected: (AppUsageSortOrder) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    fun displayLabel(order: AppUsageSortOrder): String = when (order) {
+        AppUsageSortOrder.TOTAL_DESC -> "Total"
+        AppUsageSortOrder.DOWNLOAD_DESC -> "Download"
+        AppUsageSortOrder.UPLOAD_DESC -> "Upload"
+        AppUsageSortOrder.NAME_ASC -> "Name"
+    }
+
+    fun menuLabel(order: AppUsageSortOrder): String = when (order) {
+        AppUsageSortOrder.TOTAL_DESC -> "Total Data"
+        AppUsageSortOrder.DOWNLOAD_DESC -> "Download"
+        AppUsageSortOrder.UPLOAD_DESC -> "Upload"
+        AppUsageSortOrder.NAME_ASC -> "App Name"
+    }
+
+    fun metricIcon(order: AppUsageSortOrder): ImageVector = when (order) {
+        AppUsageSortOrder.TOTAL_DESC -> Icons.Default.SwapVert
+        AppUsageSortOrder.DOWNLOAD_DESC -> Icons.Default.ArrowDownward
+        AppUsageSortOrder.UPLOAD_DESC -> Icons.Default.ArrowUpward
+        AppUsageSortOrder.NAME_ASC -> Icons.Default.SwapVert
+    }
+
+    AppUsageExposedDropdown(
+        label = "Metric",
+        selectedValueText = displayLabel(selectedMetric),
+        selectedItem = selectedMetric,
+        items = metricOptions,
+        itemLabel = ::menuLabel,
+        onItemSelected = onMetricSelected,
+        itemIcon = ::metricIcon,
+        modifier = modifier
+    )
+}
+
+@Composable
+private fun <T> AppUsageExposedDropdown(
+    label: String,
+    selectedValueText: String,
+    selectedItem: T,
+    items: List<T>,
+    itemLabel: (T) -> String,
+    onItemSelected: (T) -> Unit,
+    modifier: Modifier = Modifier,
+    itemIcon: ((T) -> ImageVector)? = null
+) {
+    var expanded by remember { mutableStateOf(false) }
+
+    Box(modifier = modifier) {
+        Surface(
+            onClick = { expanded = !expanded },
+            modifier = Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(10.dp)),
+            shape = RoundedCornerShape(10.dp),
+            border = BorderStroke(
+                width = 1.dp,
+                color = if (expanded) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline.copy(alpha = 0.4f)
+            ),
+            color = if (expanded) {
+                MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.15f)
+            } else {
+                MaterialTheme.colorScheme.surface
+            }
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 8.dp, vertical = 6.dp)
+            ) {
+                Text(
+                    text = label,
+                    style = MaterialTheme.typography.labelSmall.copy(
+                        fontSize = 10.sp,
+                        fontWeight = FontWeight.SemiBold
+                    ),
+                    color = if (expanded) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+                Spacer(modifier = Modifier.height(2.dp))
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Text(
+                        text = selectedValueText,
+                        style = MaterialTheme.typography.bodySmall.copy(
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.SemiBold
+                        ),
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.weight(1f, fill = false)
+                    )
+                    Icon(
+                        imageVector = if (expanded) Icons.Default.ArrowDropUp else Icons.Default.ArrowDropDown,
+                        contentDescription = null,
+                        modifier = Modifier.size(16.dp),
+                        tint = if (expanded) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
+        }
+
+        DropdownMenu(
+            expanded = expanded,
+            onDismissRequest = { expanded = false },
+            modifier = Modifier
+                .background(MaterialTheme.colorScheme.surface)
+                .padding(vertical = 4.dp),
+            shape = RoundedCornerShape(12.dp)
+        ) {
+            items.forEach { item ->
+                val isSelected = item == selectedItem
+                DropdownMenuItem(
+                    text = {
+                        Text(
+                            text = itemLabel(item),
+                            style = MaterialTheme.typography.bodyMedium,
+                            fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal,
+                            color = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
+                        )
+                    },
+                    onClick = {
+                        onItemSelected(item)
+                        expanded = false
+                    },
+                    leadingIcon = itemIcon?.let { iconProvider ->
+                        {
+                            Icon(
+                                imageVector = iconProvider(item),
+                                contentDescription = null,
+                                modifier = Modifier.size(18.dp),
+                                tint = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    },
+                    trailingIcon = if (isSelected) {
+                        {
+                            Icon(
+                                imageVector = Icons.Default.Check,
+                                contentDescription = "Selected",
+                                modifier = Modifier.size(16.dp),
+                                tint = MaterialTheme.colorScheme.primary
+                            )
+                        }
+                    } else null,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 6.dp, vertical = 2.dp)
+                        .clip(RoundedCornerShape(8.dp))
+                        .then(
+                            if (isSelected) {
+                                Modifier.background(
+                                    color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.35f),
+                                    shape = RoundedCornerShape(8.dp)
+                                )
+                            } else Modifier
+                        ),
+                    contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp)
+                )
+            }
+        }
     }
 }

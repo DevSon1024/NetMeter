@@ -13,5 +13,6 @@ data class AppPermission(
     val label: String?,
     val description: String?,
     val isGranted: Boolean,
-    val type: PermissionType
+    val type: PermissionType,
+    val isMajor: Boolean = false
 )

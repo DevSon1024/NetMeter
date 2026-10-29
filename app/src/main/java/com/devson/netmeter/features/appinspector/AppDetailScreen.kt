@@ -1,19 +1,24 @@
 package com.devson.netmeter.features.appinspector
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -25,6 +30,7 @@ import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Security
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.Storage
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.Button
@@ -42,7 +48,9 @@ import androidx.compose.material3.OutlinedCard
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.SuggestionChip
+import androidx.compose.material3.SuggestionChipDefaults
 import androidx.compose.material3.Text
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -66,6 +74,7 @@ import com.devson.netmeter.core.util.FormatUtils
 
 enum class PermissionFilter(val label: String) {
     ALL("All"),
+    MAJOR("Major"),
     GRANTED("Granted"),
     DENIED("Denied"),
     RUNTIME("Runtime / Dangerous")
@@ -207,7 +216,7 @@ private fun AppDetailContent(
     LazyColumn(
         modifier = Modifier
             .fillMaxSize()
-            .padding(horizontal = 16.dp, vertical = 8.dp),
+            .padding(start = 16.dp, end = 16.dp, top = 6.dp, bottom = 0.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         // App Header Card
@@ -301,8 +310,8 @@ private fun AppDetailContent(
                 )
             ) {
                 Column(
-                    modifier = Modifier.padding(12.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                    modifier = Modifier.padding(14.dp),
+                    verticalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
                     Text(
                         text = "Android Management Actions",
@@ -311,66 +320,167 @@ private fun AppDetailContent(
                         color = MaterialTheme.colorScheme.primary
                     )
 
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
+                    // Primary Action: Open App (if launchable)
+                    if (detail.isLaunchable) {
                         Button(
                             onClick = onLaunchApp,
-                            enabled = detail.isLaunchable,
-                            modifier = Modifier.weight(1f)
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .heightIn(min = 48.dp),
+                            shape = RoundedCornerShape(12.dp)
                         ) {
                             Icon(
                                 imageVector = Icons.AutoMirrored.Filled.OpenInNew,
                                 contentDescription = null,
-                                modifier = Modifier.size(16.dp)
+                                modifier = Modifier.size(18.dp)
                             )
-                            Spacer(modifier = Modifier.width(6.dp))
-                            Text("Open App")
-                        }
-
-                        OutlinedButton(
-                            onClick = onOpenAppInfo,
-                            modifier = Modifier.weight(1f)
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.Settings,
-                                contentDescription = null,
-                                modifier = Modifier.size(16.dp)
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(
+                                text = "Open Application",
+                                fontWeight = FontWeight.SemiBold
                             )
-                            Spacer(modifier = Modifier.width(6.dp))
-                            Text("App Info")
                         }
                     }
 
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        OutlinedButton(
-                            onClick = onOpenPermissions,
-                            modifier = Modifier.weight(1f)
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.Security,
-                                contentDescription = null,
-                                modifier = Modifier.size(16.dp)
-                            )
-                            Spacer(modifier = Modifier.width(6.dp))
-                            Text("Permissions")
-                        }
+                    // Settings Actions: Adaptive layout based on screen width
+                    BoxWithConstraints(modifier = Modifier.fillMaxWidth()) {
+                        val isWide = maxWidth >= 400.dp
+                        if (isWide) {
+                            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                ) {
+                                    OutlinedButton(
+                                        onClick = onOpenAppInfo,
+                                        modifier = Modifier
+                                            .weight(1f)
+                                            .heightIn(min = 48.dp),
+                                        shape = RoundedCornerShape(12.dp),
+                                        contentPadding = PaddingValues(horizontal = 10.dp, vertical = 8.dp)
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Default.Settings,
+                                            contentDescription = null,
+                                            modifier = Modifier.size(16.dp)
+                                        )
+                                        Spacer(modifier = Modifier.width(6.dp))
+                                        Text(
+                                            text = "App Info",
+                                            maxLines = 1,
+                                            overflow = TextOverflow.Ellipsis
+                                        )
+                                    }
 
-                        OutlinedButton(
-                            onClick = onOpenStorage,
-                            modifier = Modifier.weight(1f)
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.Storage,
-                                contentDescription = null,
-                                modifier = Modifier.size(16.dp)
-                            )
-                            Spacer(modifier = Modifier.width(6.dp))
-                            Text("Manage Storage")
+                                    OutlinedButton(
+                                        onClick = onOpenPermissions,
+                                        modifier = Modifier
+                                            .weight(1f)
+                                            .heightIn(min = 48.dp),
+                                        shape = RoundedCornerShape(12.dp),
+                                        contentPadding = PaddingValues(horizontal = 10.dp, vertical = 8.dp)
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Default.Security,
+                                            contentDescription = null,
+                                            modifier = Modifier.size(16.dp)
+                                        )
+                                        Spacer(modifier = Modifier.width(6.dp))
+                                        Text(
+                                            text = "Permissions",
+                                            maxLines = 1,
+                                            overflow = TextOverflow.Ellipsis
+                                        )
+                                    }
+                                }
+
+                                OutlinedButton(
+                                    onClick = onOpenStorage,
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .heightIn(min = 48.dp),
+                                    shape = RoundedCornerShape(12.dp),
+                                    contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp)
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.Storage,
+                                        contentDescription = null,
+                                        modifier = Modifier.size(16.dp)
+                                    )
+                                    Spacer(modifier = Modifier.width(6.dp))
+                                    Text(
+                                        text = "Manage Storage & Cache",
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis
+                                    )
+                                }
+                            }
+                        } else {
+                            // Compact phone portrait: full width stacked buttons so text is NEVER cramped
+                            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                                OutlinedButton(
+                                    onClick = onOpenAppInfo,
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .heightIn(min = 48.dp),
+                                    shape = RoundedCornerShape(12.dp),
+                                    contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp)
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.Settings,
+                                        contentDescription = null,
+                                        modifier = Modifier.size(16.dp)
+                                    )
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                    Text(
+                                        text = "App Info in Settings",
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis
+                                    )
+                                }
+
+                                OutlinedButton(
+                                    onClick = onOpenPermissions,
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .heightIn(min = 48.dp),
+                                    shape = RoundedCornerShape(12.dp),
+                                    contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp)
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.Security,
+                                        contentDescription = null,
+                                        modifier = Modifier.size(16.dp)
+                                    )
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                    Text(
+                                        text = "Permission Settings",
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis
+                                    )
+                                }
+
+                                OutlinedButton(
+                                    onClick = onOpenStorage,
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .heightIn(min = 48.dp),
+                                    shape = RoundedCornerShape(12.dp),
+                                    contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp)
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.Storage,
+                                        contentDescription = null,
+                                        modifier = Modifier.size(16.dp)
+                                    )
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                    Text(
+                                        text = "Manage Storage & Cache",
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis
+                                    )
+                                }
+                            }
                         }
                     }
                 }
@@ -413,6 +523,7 @@ private fun AppDetailContent(
         // Permissions Section Header & Filter
         item {
             val totalPerms = detail.permissions.size
+            val majorCount = detail.permissions.count { it.isMajor }
             val grantedCount = detail.permissions.count { it.isGranted }
             val runtimeCount = detail.permissions.count { it.type == PermissionType.RUNTIME }
 
@@ -424,7 +535,7 @@ private fun AppDetailContent(
                 )
 
                 Text(
-                    text = "$grantedCount granted • ${totalPerms - grantedCount} denied • $runtimeCount runtime",
+                    text = "$majorCount major • $grantedCount granted • ${totalPerms - grantedCount} denied • $runtimeCount runtime",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -446,7 +557,7 @@ private fun AppDetailContent(
                 }
 
                 Text(
-                    text = "Reports permissions declared in the manifest via PackageManager. Runtime capabilities dynamically checked without declarations cannot be detected.",
+                    text = "Reports permissions declared in the manifest via PackageManager. Major device capabilities (Camera, Storage, Vibration, etc.) are highlighted at the top.",
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.outline
                 )
@@ -457,6 +568,7 @@ private fun AppDetailContent(
         val filteredPerms = detail.permissions.filter { perm ->
             when (selectedPermFilter) {
                 PermissionFilter.ALL -> true
+                PermissionFilter.MAJOR -> perm.isMajor
                 PermissionFilter.GRANTED -> perm.isGranted
                 PermissionFilter.DENIED -> !perm.isGranted
                 PermissionFilter.RUNTIME -> perm.type == PermissionType.RUNTIME
@@ -489,10 +601,6 @@ private fun AppDetailContent(
             items(filteredPerms, key = { it.name }) { perm ->
                 PermissionItemCard(permission = perm)
             }
-        }
-
-        item {
-            Spacer(modifier = Modifier.height(16.dp))
         }
     }
 }
@@ -638,8 +746,15 @@ private fun PermissionItemCard(permission: AppPermission) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface
-        )
+            containerColor = if (permission.isMajor) {
+                MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.2f)
+            } else {
+                MaterialTheme.colorScheme.surface
+            }
+        ),
+        border = if (permission.isMajor) {
+            BorderStroke(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.4f))
+        } else null
     ) {
         Column(
             modifier = Modifier.padding(12.dp),
@@ -650,12 +765,25 @@ private fun PermissionItemCard(permission: AppPermission) {
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Text(
-                    text = permission.label ?: permission.name.substringAfterLast('.'),
-                    style = MaterialTheme.typography.titleSmall,
-                    fontWeight = FontWeight.SemiBold,
-                    modifier = Modifier.weight(1f)
-                )
+                Row(
+                    modifier = Modifier.weight(1f),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                ) {
+                    if (permission.isMajor) {
+                        Icon(
+                            imageVector = Icons.Default.Star,
+                            contentDescription = "Major Capability",
+                            tint = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.size(16.dp)
+                        )
+                    }
+                    Text(
+                        text = permission.label ?: permission.name.substringAfterLast('.'),
+                        style = MaterialTheme.typography.titleSmall,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                }
 
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
@@ -706,15 +834,38 @@ private fun PermissionItemCard(permission: AppPermission) {
                 )
             }
 
-            SuggestionChip(
-                onClick = {},
-                label = {
-                    Text(
-                        text = permission.type.label,
-                        style = MaterialTheme.typography.labelSmall
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(6.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                SuggestionChip(
+                    onClick = {},
+                    label = {
+                        Text(
+                            text = permission.type.label,
+                            style = MaterialTheme.typography.labelSmall
+                        )
+                    }
+                )
+
+                if (permission.isMajor) {
+                    SuggestionChip(
+                        onClick = {},
+                        label = {
+                            Text(
+                                text = "Major Capability",
+                                style = MaterialTheme.typography.labelSmall,
+                                fontWeight = FontWeight.Bold
+                            )
+                        },
+                        colors = SuggestionChipDefaults.suggestionChipColors(
+                            containerColor = MaterialTheme.colorScheme.primaryContainer,
+                            labelColor = MaterialTheme.colorScheme.onPrimaryContainer
+                        ),
+                        border = null
                     )
                 }
-            )
+            }
         }
     }
 }
