@@ -1,15 +1,19 @@
 package com.devson.netmeter.features.speedtest
 
-import androidx.lifecycle.ViewModel
+import android.app.Application
+import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.devson.netmeter.core.data.speedtest.HttpUrlConnectionSpeedTestEngine
 import com.devson.netmeter.core.data.speedtest.SpeedTestEngine
-import com.devson.netmeter.core.domain.model.LatencyMeasurement
+import com.devson.netmeter.core.data.speedtest.SpeedTestHistoryRepository
+import com.devson.netmeter.core.data.speedtest.SqliteSpeedTestHistoryRepository
 import com.devson.netmeter.core.domain.model.SpeedTestConfig
-import com.devson.netmeter.core.domain.model.SpeedTestErrorType
 import com.devson.netmeter.core.domain.model.SpeedTestEvent
 import com.devson.netmeter.core.domain.model.SpeedTestFinalReport
 import com.devson.netmeter.core.domain.model.SpeedTestPhase
+import com.devson.netmeter.core.domain.model.SpeedTestRecord
+import com.devson.netmeter.core.util.AndroidConnectivityObserver
+import com.devson.netmeter.core.util.ConnectivityObserver
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -30,30 +34,72 @@ data class SpeedTestUiState(
     val totalBytesConsumed: Long = 0L,
     val statusMessage: String = "Ready to test connection speed",
     val serverHost: String = SpeedTestConfig.DEFAULT.hostDisplayName,
+    val currentNetworkType: String = "Online",
     val errorMessage: String? = null,
-    val completedReport: SpeedTestFinalReport? = null
+    val completedReport: SpeedTestFinalReport? = null,
+    val historyRecords: List<SpeedTestRecord> = emptyList()
 )
 
-class SpeedTestViewModel(
-    private val speedTestEngine: SpeedTestEngine = HttpUrlConnectionSpeedTestEngine()
-) : ViewModel() {
+class SpeedTestViewModel @JvmOverloads constructor(
+    application: Application,
+    private val speedTestEngine: SpeedTestEngine = HttpUrlConnectionSpeedTestEngine(),
+    private val historyRepository: SpeedTestHistoryRepository = SqliteSpeedTestHistoryRepository(application.applicationContext),
+    private val connectivityObserver: ConnectivityObserver = AndroidConnectivityObserver(application.applicationContext)
+) : AndroidViewModel(application) {
 
-    private val _uiState = MutableStateFlow(SpeedTestUiState())
+    private val _uiState = MutableStateFlow(
+        SpeedTestUiState(
+            currentNetworkType = connectivityObserver.getCurrentState().type.displayName
+        )
+    )
     val uiState: StateFlow<SpeedTestUiState> = _uiState.asStateFlow()
 
     private var activeTestJob: Job? = null
 
+    init {
+        observeHistory()
+        observeConnectivity()
+    }
+
+    private fun observeHistory() {
+        viewModelScope.launch {
+            historyRepository.getHistoryFlow().collect { records ->
+                _uiState.update { it.copy(historyRecords = records) }
+            }
+        }
+    }
+
+    private fun observeConnectivity() {
+        viewModelScope.launch {
+            connectivityObserver.networkState.collect { connectionState ->
+                _uiState.update { it.copy(currentNetworkType = connectionState.type.displayName) }
+            }
+        }
+    }
+
     fun startSpeedTest(config: SpeedTestConfig = SpeedTestConfig.DEFAULT) {
+        // Prevent duplicate concurrent tests
         if (_uiState.value.isTesting) return
 
         activeTestJob?.cancel()
+        val networkType = connectivityObserver.getCurrentState().type.displayName
+
         _uiState.update {
-            SpeedTestUiState(
+            it.copy(
                 isTesting = true,
-                phase = SpeedTestPhase.LATENCY,
+                phase = SpeedTestPhase.PREPARING,
                 progressFraction = 0.02f,
-                statusMessage = "Connecting to ${config.hostDisplayName}...",
-                serverHost = config.hostDisplayName
+                currentSpeedMbps = 0.0,
+                downloadMbps = 0.0,
+                uploadMbps = 0.0,
+                httpLatencyMs = 0.0,
+                jitterMs = 0.0,
+                totalBytesConsumed = 0L,
+                statusMessage = "Preparing test sockets and connecting to ${config.hostDisplayName}...",
+                serverHost = config.hostDisplayName,
+                currentNetworkType = networkType,
+                errorMessage = null,
+                completedReport = null
             )
         }
 
@@ -67,12 +113,12 @@ class SpeedTestViewModel(
                                 phase = event.progress.phase,
                                 progressFraction = event.progress.progressFraction,
                                 currentSpeedMbps = event.progress.currentMbps,
-                                downloadMbps = if (event.progress.phase == SpeedTestPhase.DOWNLOAD) {
+                                downloadMbps = if (event.progress.phase == SpeedTestPhase.DOWNLOADING) {
                                     event.progress.currentMbps
                                 } else {
                                     event.progress.downloadSpeedMbps
                                 },
-                                uploadMbps = if (event.progress.phase == SpeedTestPhase.UPLOAD) {
+                                uploadMbps = if (event.progress.phase == SpeedTestPhase.UPLOADING) {
                                     event.progress.currentMbps
                                 } else {
                                     event.progress.uploadSpeedMbps
@@ -108,13 +154,26 @@ class SpeedTestViewModel(
                                 completedReport = event.report
                             )
                         }
+
+                        // Persist only genuine completed results to SQLite history
+                        val historyRecord = SpeedTestRecord(
+                            timestampMillis = event.report.timestampMillis,
+                            networkType = networkType,
+                            latencyMs = event.report.latency.averageMs,
+                            jitterMs = event.report.latency.jitterMs,
+                            downloadMbps = event.report.downloadMbps,
+                            uploadMbps = event.report.uploadMbps,
+                            totalBytesConsumed = event.report.totalBytesConsumed,
+                            serverHost = event.report.endpointHost
+                        )
+                        historyRepository.saveTestResult(historyRecord)
                     }
 
                     is SpeedTestEvent.Failed -> {
                         _uiState.update { state ->
                             state.copy(
                                 isTesting = false,
-                                phase = SpeedTestPhase.ERROR,
+                                phase = SpeedTestPhase.FAILED,
                                 statusMessage = "Speed test failed",
                                 errorMessage = event.errorType.userMessage
                             )
@@ -142,20 +201,40 @@ class SpeedTestViewModel(
                 state.copy(
                     isTesting = false,
                     phase = SpeedTestPhase.CANCELLED,
-                    statusMessage = "Speed test cancelled"
+                    statusMessage = "Speed test cancelled by user"
                 )
             }
         }
     }
 
+    fun clearHistory() {
+        viewModelScope.launch {
+            historyRepository.clearHistory()
+        }
+    }
+
     fun resetState() {
         if (!_uiState.value.isTesting) {
-            _uiState.value = SpeedTestUiState()
+            _uiState.update {
+                it.copy(
+                    phase = SpeedTestPhase.IDLE,
+                    progressFraction = 0f,
+                    currentSpeedMbps = 0.0,
+                    downloadMbps = 0.0,
+                    uploadMbps = 0.0,
+                    httpLatencyMs = 0.0,
+                    jitterMs = 0.0,
+                    statusMessage = "Ready to test connection speed",
+                    errorMessage = null,
+                    completedReport = null
+                )
+            }
         }
     }
 
     override fun onCleared() {
         super.onCleared()
+        // Prevent orphaned network sockets when ViewModel is cleared
         activeTestJob?.cancel()
     }
 }

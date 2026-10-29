@@ -35,6 +35,17 @@ class HttpUrlConnectionSpeedTestEngine : SpeedTestEngine {
         var totalBytesConsumed = 0L
 
         try {
+            // 0. PREPARING PHASE
+            emit(
+                SpeedTestEvent.ProgressUpdate(
+                    SpeedTestProgress(
+                        phase = SpeedTestPhase.PREPARING,
+                        progressFraction = 0.02f,
+                        statusText = "Preparing test sockets and connecting to ${config.hostDisplayName}..."
+                    )
+                )
+            )
+
             // 1. LATENCY PHASE
             emit(
                 SpeedTestEvent.ProgressUpdate(

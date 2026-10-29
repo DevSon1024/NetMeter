@@ -4,13 +4,33 @@ import java.net.URI
 
 enum class SpeedTestPhase(val label: String) {
     IDLE("Idle"),
+    PREPARING("Preparing"),
     LATENCY("Testing Latency"),
-    DOWNLOAD("Testing Download"),
-    UPLOAD("Testing Upload"),
+    DOWNLOADING("Downloading"),
+    UPLOADING("Uploading"),
     COMPLETED("Completed"),
     CANCELLED("Cancelled"),
-    ERROR("Failed")
+    FAILED("Failed");
+
+    // Backward-compatible aliases
+    companion object {
+        val DOWNLOAD get() = DOWNLOADING
+        val UPLOAD get() = UPLOADING
+        val ERROR get() = FAILED
+    }
 }
+
+data class SpeedTestRecord(
+    val id: Long = 0L,
+    val timestampMillis: Long,
+    val networkType: String,
+    val latencyMs: Double,
+    val jitterMs: Double,
+    val downloadMbps: Double,
+    val uploadMbps: Double,
+    val totalBytesConsumed: Long,
+    val serverHost: String
+)
 
 enum class SpeedTestErrorType(val userMessage: String) {
     NO_CONNECTIVITY("No internet connection available. Check your Wi-Fi or mobile network."),

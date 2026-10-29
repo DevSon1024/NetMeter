@@ -24,7 +24,10 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowDownward
 import androidx.compose.material.icons.filled.ArrowUpward
 import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.DeleteSweep
 import androidx.compose.material.icons.filled.Dns
+import androidx.compose.material.icons.filled.History
+import androidx.compose.material.icons.filled.HourglassTop
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.NetworkCheck
 import androidx.compose.material.icons.filled.PlayArrow
@@ -33,12 +36,14 @@ import androidx.compose.material.icons.filled.Speed
 import androidx.compose.material.icons.filled.Stop
 import androidx.compose.material.icons.filled.Timer
 import androidx.compose.material.icons.filled.Warning
+import androidx.compose.material.icons.filled.Wifi
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedCard
@@ -59,6 +64,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.devson.netmeter.core.domain.model.SpeedTestPhase
+import com.devson.netmeter.core.domain.model.SpeedTestRecord
 import com.devson.netmeter.core.util.FormatUtils
 import java.util.Locale
 
@@ -77,7 +83,7 @@ fun SpeedTestScreen(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        // Screen Header
+        // Screen Title Header
         Text(
             text = "Internet Speed Test",
             style = MaterialTheme.typography.headlineMedium,
@@ -85,10 +91,10 @@ fun SpeedTestScreen(
             color = MaterialTheme.colorScheme.onSurface
         )
 
-        // Data Consumption Disclosure Banner
-        DataConsumptionNoticeCard()
+        // Clear Warning Banner: Test Consumes Internet Data
+        DataConsumptionWarningCard()
 
-        // Circular Speed Gauge
+        // Circular Animated Speed Gauge
         SpeedGaugeCard(
             phase = uiState.phase,
             progressFraction = uiState.progressFraction,
@@ -97,17 +103,8 @@ fun SpeedTestScreen(
             uploadMbps = uiState.uploadMbps
         )
 
-        // Status Indicator
-        Text(
-            text = uiState.statusMessage,
-            style = MaterialTheme.typography.bodyMedium,
-            color = if (uiState.phase == SpeedTestPhase.ERROR) {
-                MaterialTheme.colorScheme.error
-            } else {
-                MaterialTheme.colorScheme.onSurfaceVariant
-            },
-            textAlign = TextAlign.Center
-        )
+        // Distinct Phase Status Indicator
+        PhaseStatusBadge(phase = uiState.phase, statusMessage = uiState.statusMessage)
 
         // Error Banner if failed
         AnimatedVisibility(
@@ -126,14 +123,14 @@ fun SpeedTestScreen(
         // Metrics Grid (HTTP Latency, Jitter, Download, Upload)
         SpeedMetricsGrid(uiState = uiState)
 
-        // Server Endpoint & Data Consumed Info
-        TestEndpointDetailsCard(
+        // Active Connection & Server Info
+        ConnectionEndpointCard(
+            networkType = uiState.currentNetworkType,
             serverHost = uiState.serverHost,
-            totalBytes = uiState.totalBytesConsumed,
-            isCompleted = uiState.phase == SpeedTestPhase.COMPLETED
+            totalBytes = uiState.totalBytesConsumed
         )
 
-        Spacer(modifier = Modifier.height(8.dp))
+        Spacer(modifier = Modifier.height(4.dp))
 
         // Start / Cancel Action Button
         SpeedTestActionButton(
@@ -143,12 +140,18 @@ fun SpeedTestScreen(
             onCancel = { viewModel.cancelSpeedTest() }
         )
 
+        // Test History Section (Reverse Chronological)
+        TestHistorySection(
+            historyRecords = uiState.historyRecords,
+            onClearHistory = { viewModel.clearHistory() }
+        )
+
         Spacer(modifier = Modifier.height(16.dp))
     }
 }
 
 @Composable
-private fun DataConsumptionNoticeCard() {
+private fun DataConsumptionWarningCard() {
     Surface(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(12.dp),
@@ -166,9 +169,57 @@ private fun DataConsumptionNoticeCard() {
                 modifier = Modifier.size(20.dp)
             )
             Text(
-                text = "Speed tests transfer real data (~10-15 MB) over your active connection. Tests are user-initiated and never run automatically.",
+                text = "Notice: Speed tests transfer bounded real data (~10-15 MB) over your connection. Tests are user-initiated and never run automatically.",
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+    }
+}
+
+@Composable
+private fun PhaseStatusBadge(
+    phase: SpeedTestPhase,
+    statusMessage: String
+) {
+    val (badgeBg, badgeFg) = when (phase) {
+        SpeedTestPhase.COMPLETED -> MaterialTheme.colorScheme.primaryContainer to MaterialTheme.colorScheme.onPrimaryContainer
+        SpeedTestPhase.FAILED -> MaterialTheme.colorScheme.errorContainer to MaterialTheme.colorScheme.onErrorContainer
+        SpeedTestPhase.CANCELLED -> MaterialTheme.colorScheme.surfaceVariant to MaterialTheme.colorScheme.onSurfaceVariant
+        SpeedTestPhase.IDLE -> MaterialTheme.colorScheme.surfaceVariant to MaterialTheme.colorScheme.onSurfaceVariant
+        else -> MaterialTheme.colorScheme.tertiaryContainer to MaterialTheme.colorScheme.onTertiaryContainer
+    }
+
+    Surface(
+        shape = RoundedCornerShape(16.dp),
+        color = badgeBg
+    ) {
+        Row(
+            modifier = Modifier.padding(horizontal = 14.dp, vertical = 6.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(6.dp)
+        ) {
+            Icon(
+                imageVector = when (phase) {
+                    SpeedTestPhase.PREPARING -> Icons.Default.HourglassTop
+                    SpeedTestPhase.LATENCY -> Icons.Default.Timer
+                    SpeedTestPhase.DOWNLOADING -> Icons.Default.ArrowDownward
+                    SpeedTestPhase.UPLOADING -> Icons.Default.ArrowUpward
+                    SpeedTestPhase.COMPLETED -> Icons.Default.CheckCircle
+                    SpeedTestPhase.CANCELLED -> Icons.Default.Stop
+                    SpeedTestPhase.FAILED -> Icons.Default.Warning
+                    SpeedTestPhase.IDLE -> Icons.Default.Speed
+                },
+                contentDescription = null,
+                modifier = Modifier.size(16.dp),
+                tint = badgeFg
+            )
+            Text(
+                text = statusMessage,
+                style = MaterialTheme.typography.labelMedium,
+                fontWeight = FontWeight.SemiBold,
+                color = badgeFg,
+                textAlign = TextAlign.Center
             )
         }
     }
@@ -191,13 +242,14 @@ private fun SpeedGaugeCard(
     val trackColor = MaterialTheme.colorScheme.surfaceContainerHighest
 
     val displaySpeed = when (phase) {
-        SpeedTestPhase.LATENCY -> "--"
-        SpeedTestPhase.DOWNLOAD, SpeedTestPhase.UPLOAD -> String.format(Locale.US, "%.1f", currentSpeedMbps)
+        SpeedTestPhase.PREPARING, SpeedTestPhase.LATENCY -> "--"
+        SpeedTestPhase.DOWNLOADING, SpeedTestPhase.UPLOADING -> String.format(Locale.US, "%.1f", currentSpeedMbps)
         SpeedTestPhase.COMPLETED -> String.format(Locale.US, "%.1f", downloadMbps)
         else -> "0.0"
     }
 
     val displayUnit = when (phase) {
+        SpeedTestPhase.PREPARING -> "Preparing"
         SpeedTestPhase.LATENCY -> "HTTP Latency"
         else -> "Mbps"
     }
@@ -246,9 +298,9 @@ private fun SpeedGaugeCard(
             ) {
                 Icon(
                     imageVector = when (phase) {
-                        SpeedTestPhase.DOWNLOAD -> Icons.Default.ArrowDownward
-                        SpeedTestPhase.UPLOAD -> Icons.Default.ArrowUpward
-                        SpeedTestPhase.LATENCY -> Icons.Default.Timer
+                        SpeedTestPhase.DOWNLOADING -> Icons.Default.ArrowDownward
+                        SpeedTestPhase.UPLOADING -> Icons.Default.ArrowUpward
+                        SpeedTestPhase.LATENCY, SpeedTestPhase.PREPARING -> Icons.Default.Timer
                         SpeedTestPhase.COMPLETED -> Icons.Default.CheckCircle
                         else -> Icons.Default.Speed
                     },
@@ -400,10 +452,10 @@ private fun MetricCard(
 }
 
 @Composable
-private fun TestEndpointDetailsCard(
+private fun ConnectionEndpointCard(
+    networkType: String,
     serverHost: String,
-    totalBytes: Long,
-    isCompleted: Boolean
+    totalBytes: Long
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -416,6 +468,36 @@ private fun TestEndpointDetailsCard(
                 .padding(14.dp),
             verticalArrangement = Arrangement.spacedBy(6.dp)
         ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Wifi,
+                        contentDescription = null,
+                        modifier = Modifier.size(16.dp),
+                        tint = MaterialTheme.colorScheme.primary
+                    )
+                    Text(
+                        text = "Active Transport",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.outline
+                    )
+                }
+
+                Text(
+                    text = networkType,
+                    style = MaterialTheme.typography.labelMedium,
+                    fontWeight = FontWeight.SemiBold,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+            }
+
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -462,24 +544,6 @@ private fun TestEndpointDetailsCard(
                     style = MaterialTheme.typography.labelMedium,
                     fontWeight = FontWeight.SemiBold,
                     color = MaterialTheme.colorScheme.onSurface
-                )
-            }
-
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = "Latency Methodology",
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.outline
-                )
-
-                Text(
-                    text = "HTTP/1.1 TLS RTT (Not ICMP)",
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.primary
                 )
             }
         }
@@ -586,6 +650,188 @@ private fun SpeedTestActionButton(
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold
             )
+        }
+    }
+}
+
+@Composable
+private fun TestHistorySection(
+    historyRecords: List<SpeedTestRecord>,
+    onClearHistory: () -> Unit
+) {
+    Column(
+        modifier = Modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(10.dp)
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(6.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Default.History,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.size(20.dp)
+                )
+                Text(
+                    text = "Previous Results",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold
+                )
+                if (historyRecords.isNotEmpty()) {
+                    Surface(
+                        shape = RoundedCornerShape(10.dp),
+                        color = MaterialTheme.colorScheme.secondaryContainer
+                    ) {
+                        Text(
+                            text = "${historyRecords.size}",
+                            modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSecondaryContainer
+                        )
+                    }
+                }
+            }
+
+            if (historyRecords.isNotEmpty()) {
+                IconButton(
+                    onClick = onClearHistory,
+                    modifier = Modifier.size(36.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.DeleteSweep,
+                        contentDescription = "Clear test history",
+                        tint = MaterialTheme.colorScheme.outline
+                    )
+                }
+            }
+        }
+
+        if (historyRecords.isEmpty()) {
+            OutlinedCard(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(12.dp)
+            ) {
+                Text(
+                    text = "No previous test results yet. Run a speed test to track connection performance over time.",
+                    modifier = Modifier.padding(16.dp),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.outline,
+                    textAlign = TextAlign.Center
+                )
+            }
+        } else {
+            historyRecords.forEach { record ->
+                HistoryRecordCard(record = record)
+            }
+        }
+    }
+}
+
+@Composable
+private fun HistoryRecordCard(record: SpeedTestRecord) {
+    ElevatedCard(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(12.dp)
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(14.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            // Header: Date/Time & Network Type Badge
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "${FormatUtils.formatDate(record.timestampMillis)} at ${FormatUtils.formatTime(record.timestampMillis)}",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.outline
+                )
+
+                Surface(
+                    shape = RoundedCornerShape(8.dp),
+                    color = MaterialTheme.colorScheme.primaryContainer
+                ) {
+                    Text(
+                        text = record.networkType,
+                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp),
+                        style = MaterialTheme.typography.labelSmall,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onPrimaryContainer
+                    )
+                }
+            }
+
+            // Throughput & Latency Metrics
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Column {
+                    Text(
+                        text = "Download",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.outline
+                    )
+                    Text(
+                        text = String.format(Locale.US, "%.1f Mbps", record.downloadMbps),
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                }
+
+                Column {
+                    Text(
+                        text = "Upload",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.outline
+                    )
+                    Text(
+                        text = String.format(Locale.US, "%.1f Mbps", record.uploadMbps),
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.secondary
+                    )
+                }
+
+                Column {
+                    Text(
+                        text = "HTTP Latency",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.outline
+                    )
+                    Text(
+                        text = String.format(Locale.US, "%.0f ms", record.latencyMs),
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.tertiary
+                    )
+                }
+
+                Column {
+                    Text(
+                        text = "Jitter",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.outline
+                    )
+                    Text(
+                        text = String.format(Locale.US, "%.1f ms", record.jitterMs),
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
         }
     }
 }
