@@ -47,10 +47,8 @@ android {
         }
         release {
             signingConfig = signingConfigs.getByName("release")
-            optimization {
-                enable = true
-                packageScope = setOf("androidx.**", "kotlin.**", "kotlinx.**")
-            }
+            isMinifyEnabled = false
+            isShrinkResources = false
         }
     }
     compileOptions {
@@ -62,6 +60,21 @@ android {
     }
     testOptions {
         unitTests.isReturnDefaultValues = true
+    }
+}
+
+base {
+    archivesName.set("NetMeter")
+}
+
+androidComponents {
+    onVariants { variant ->
+        val versionName = android.defaultConfig.versionName ?: "1.0.0"
+        variant.outputs.forEach { output ->
+            if (output is com.android.build.api.variant.impl.VariantOutputImpl) {
+                output.outputFileName.set("NetMeter-${variant.name}-v$versionName.apk")
+            }
+        }
     }
 }
 
