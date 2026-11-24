@@ -24,6 +24,7 @@ import com.devson.netmeter.core.domain.model.NetworkType
 import com.devson.netmeter.core.domain.model.SpeedTestRecord
 import com.devson.netmeter.core.domain.model.UsageQueryResult
 import com.devson.netmeter.core.domain.repository.NetworkStatsRepository
+import com.devson.netmeter.core.theme.AppThemePalette
 import com.devson.netmeter.core.theme.ThemeMode
 import com.devson.netmeter.core.util.CsvExportHelper
 import com.devson.netmeter.core.util.HistoryDateHelper
@@ -44,6 +45,9 @@ import java.util.Calendar
 
 data class SettingsUiState(
     val selectedThemeMode: ThemeMode = ThemeMode.SYSTEM,
+    val selectedPalette: AppThemePalette = AppThemePalette.BLUE,
+    val isAmoledTheme: Boolean = false,
+    val dynamicColor: Boolean = false,
     val quotaEnabled: Boolean = false,
     val quotaInputMb: String = "",
     val quotaInputError: String? = null,
@@ -73,6 +77,18 @@ class SettingsViewModel @JvmOverloads constructor(
         .map { it.themeMode }
         .stateIn(viewModelScope, SharingStarted.Eagerly, ThemeMode.SYSTEM)
 
+    val selectedPalette: StateFlow<AppThemePalette> = userSettingsRepository.settingsFlow
+        .map { it.selectedPalette }
+        .stateIn(viewModelScope, SharingStarted.Eagerly, AppThemePalette.BLUE)
+
+    val isAmoledTheme: StateFlow<Boolean> = userSettingsRepository.settingsFlow
+        .map { it.isAmoledTheme }
+        .stateIn(viewModelScope, SharingStarted.Eagerly, false)
+
+    val dynamicColor: StateFlow<Boolean> = userSettingsRepository.settingsFlow
+        .map { it.dynamicColor }
+        .stateIn(viewModelScope, SharingStarted.Eagerly, false)
+
     private val _uiState = MutableStateFlow(SettingsUiState())
     val uiState: StateFlow<SettingsUiState> = _uiState.asStateFlow()
 
@@ -95,6 +111,9 @@ class SettingsViewModel @JvmOverloads constructor(
 
                     current.copy(
                         selectedThemeMode = settings.themeMode,
+                        selectedPalette = settings.selectedPalette,
+                        isAmoledTheme = settings.isAmoledTheme,
+                        dynamicColor = settings.dynamicColor,
                         quotaEnabled = settings.quotaEnabled,
                         quotaInputMb = quotaMbString,
                         warningThresholdPercent = settings.warningThresholdPercent,
@@ -138,6 +157,24 @@ class SettingsViewModel @JvmOverloads constructor(
     fun setThemeMode(mode: ThemeMode) {
         viewModelScope.launch(ioDispatcher) {
             userSettingsRepository.setThemeMode(mode)
+        }
+    }
+
+    fun setSelectedPalette(palette: AppThemePalette) {
+        viewModelScope.launch(ioDispatcher) {
+            userSettingsRepository.setSelectedPalette(palette)
+        }
+    }
+
+    fun setAmoledTheme(enabled: Boolean) {
+        viewModelScope.launch(ioDispatcher) {
+            userSettingsRepository.setAmoledTheme(enabled)
+        }
+    }
+
+    fun setDynamicColor(enabled: Boolean) {
+        viewModelScope.launch(ioDispatcher) {
+            userSettingsRepository.setDynamicColor(enabled)
         }
     }
 

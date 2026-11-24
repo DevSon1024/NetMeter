@@ -15,6 +15,10 @@ import com.devson.netmeter.core.permission.UsagePermissionViewModel
 import com.devson.netmeter.features.appusage.AppUsageScreen
 import com.devson.netmeter.features.dashboard.DashboardScreen
 import com.devson.netmeter.features.history.HistoryScreen
+import com.devson.netmeter.features.settings.AboutScreen
+import com.devson.netmeter.features.settings.AppearanceScreen
+import com.devson.netmeter.features.settings.AppSettingsScreen
+import com.devson.netmeter.features.settings.DataManagementScreen
 import com.devson.netmeter.features.settings.SettingsScreen
 import com.devson.netmeter.features.settings.SettingsViewModel
 import com.devson.netmeter.features.speedtest.SpeedTestScreen
@@ -142,6 +146,9 @@ fun AppNavigation(
                 permissionViewModel = permissionViewModel,
                 onInspectApp = { packageName ->
                     navController.navigate(Screen.AppInspectorDetail.createRoute(packageName))
+                },
+                onNavigateToHistory = {
+                    navController.navigate(Screen.History.route)
                 }
             )
         }
@@ -153,13 +160,42 @@ fun AppNavigation(
         }
         composable(Screen.Settings.route) {
             SettingsScreen(
-                viewModel = settingsViewModel,
-                onNavigateToInspector = {
-                    navController.navigate(Screen.AppInspector.route)
+                onNavigateToAppearance = {
+                    navController.navigate(Screen.SettingsAppearance.route)
                 },
-                onNavigateToApkAnalyzer = {
-                    navController.navigate(Screen.ApkAnalyzer.route)
+                onNavigateToAppSettings = {
+                    navController.navigate(Screen.SettingsApp.route)
+                },
+                onNavigateToDataManagement = {
+                    navController.navigate(Screen.SettingsData.route)
+                },
+                onNavigateToAbout = {
+                    navController.navigate(Screen.SettingsAbout.route)
                 }
+            )
+        }
+        composable(Screen.SettingsAppearance.route) {
+            AppearanceScreen(
+                onNavigateBack = { navController.popBackStack() },
+                viewModel = settingsViewModel
+            )
+        }
+        composable(Screen.SettingsApp.route) {
+            AppSettingsScreen(
+                onNavigateBack = { navController.popBackStack() },
+                viewModel = settingsViewModel
+            )
+        }
+        composable(Screen.SettingsData.route) {
+            DataManagementScreen(
+                onNavigateBack = { navController.popBackStack() },
+                viewModel = settingsViewModel
+            )
+        }
+        composable(Screen.SettingsAbout.route) {
+            AboutScreen(
+                onNavigateBack = { navController.popBackStack() },
+                viewModel = settingsViewModel
             )
         }
         composable(Screen.ApkAnalyzer.route) {

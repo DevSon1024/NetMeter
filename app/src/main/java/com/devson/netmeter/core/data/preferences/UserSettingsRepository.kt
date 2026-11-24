@@ -10,6 +10,8 @@ import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
+import com.devson.netmeter.core.theme.AppThemePalette
+import com.devson.netmeter.core.theme.AppThemePaletteHelper
 import com.devson.netmeter.core.theme.ThemeMode
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
@@ -27,6 +29,9 @@ val Context.settingsDataStore: DataStore<Preferences> by preferencesDataStore(na
  */
 data class UserSettings(
     val themeMode: ThemeMode = ThemeMode.SYSTEM,
+    val selectedPalette: AppThemePalette = AppThemePalette.BLUE,
+    val isAmoledTheme: Boolean = false,
+    val dynamicColor: Boolean = false,
     val quotaEnabled: Boolean = false,
     val mobileQuotaBytes: Long = 0L,
     val warningThresholdPercent: Int = 80
@@ -50,6 +55,9 @@ data class UserSettings(
 interface UserSettingsRepository {
     val settingsFlow: Flow<UserSettings>
     suspend fun setThemeMode(themeMode: ThemeMode)
+    suspend fun setSelectedPalette(palette: AppThemePalette)
+    suspend fun setAmoledTheme(enabled: Boolean)
+    suspend fun setDynamicColor(enabled: Boolean)
     suspend fun setQuotaSettings(enabled: Boolean, quotaBytes: Long, warningThresholdPercent: Int)
 }
 
@@ -63,6 +71,9 @@ class DataStoreUserSettingsRepository(
 
     private object PreferencesKeys {
         val THEME_MODE = stringPreferencesKey("theme_mode")
+        val THEME_PALETTE = stringPreferencesKey("theme_palette")
+        val AMOLED_THEME = booleanPreferencesKey("amoled_theme")
+        val DYNAMIC_COLOR = booleanPreferencesKey("dynamic_color")
         val QUOTA_ENABLED = booleanPreferencesKey("mobile_quota_enabled")
         val MOBILE_QUOTA_BYTES = longPreferencesKey("mobile_quota_bytes")
         val WARNING_THRESHOLD_PERCENT = intPreferencesKey("warning_threshold_percent")
@@ -84,12 +95,21 @@ class DataStoreUserSettingsRepository(
                 ThemeMode.SYSTEM
             }
 
+            val paletteName = preferences[PreferencesKeys.THEME_PALETTE]
+            val palette = AppThemePaletteHelper.fromKey(paletteName)
+
+            val isAmoled = preferences[PreferencesKeys.AMOLED_THEME] ?: false
+            val dynamicColor = preferences[PreferencesKeys.DYNAMIC_COLOR] ?: false
+
             val quotaEnabled = preferences[PreferencesKeys.QUOTA_ENABLED] ?: false
             val quotaBytes = (preferences[PreferencesKeys.MOBILE_QUOTA_BYTES] ?: 0L).coerceAtLeast(0L)
             val threshold = (preferences[PreferencesKeys.WARNING_THRESHOLD_PERCENT] ?: 80).coerceIn(1, 100)
 
             UserSettings(
                 themeMode = themeMode,
+                selectedPalette = palette,
+                isAmoledTheme = isAmoled,
+                dynamicColor = dynamicColor,
                 quotaEnabled = quotaEnabled,
                 mobileQuotaBytes = quotaBytes,
                 warningThresholdPercent = threshold
@@ -100,6 +120,24 @@ class DataStoreUserSettingsRepository(
     override suspend fun setThemeMode(themeMode: ThemeMode): Unit = withContext(dispatcher) {
         dataStore.edit { preferences ->
             preferences[PreferencesKeys.THEME_MODE] = themeMode.name
+        }
+    }
+
+    override suspend fun setSelectedPalette(palette: AppThemePalette): Unit = withContext(dispatcher) {
+        dataStore.edit { preferences ->
+            preferences[PreferencesKeys.THEME_PALETTE] = palette.name
+        }
+    }
+
+    override suspend fun setAmoledTheme(enabled: Boolean): Unit = withContext(dispatcher) {
+        dataStore.edit { preferences ->
+            preferences[PreferencesKeys.AMOLED_THEME] = enabled
+        }
+    }
+
+    override suspend fun setDynamicColor(enabled: Boolean): Unit = withContext(dispatcher) {
+        dataStore.edit { preferences ->
+            preferences[PreferencesKeys.DYNAMIC_COLOR] = enabled
         }
     }
 

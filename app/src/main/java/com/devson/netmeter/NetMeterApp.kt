@@ -15,14 +15,10 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
@@ -44,6 +40,7 @@ import androidx.navigation.compose.rememberNavController
 import com.devson.netmeter.core.navigation.AppNavigation
 import com.devson.netmeter.core.navigation.Screen
 import com.devson.netmeter.core.permission.UsagePermissionViewModel
+import com.devson.netmeter.core.ui.UnifiedTopBar
 import com.devson.netmeter.features.settings.SettingsViewModel
 
 @Composable
@@ -54,56 +51,13 @@ fun NetMeterApp(
 ) {
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route ?: Screen.Dashboard.route
-    val currentTitle = when {
-        currentRoute == Screen.AppInspector.route -> Screen.AppInspector.title
-        currentRoute.startsWith("app_inspector_detail") -> Screen.AppInspectorDetail.title
-        currentRoute == Screen.ApkAnalyzer.route -> Screen.ApkAnalyzer.title
-        else -> (Screen.bottomNavScreens.find { it.route == currentRoute } ?: Screen.Dashboard).title
-    }
-    val canNavigateBack = currentRoute == Screen.AppInspector.route ||
-            currentRoute.startsWith("app_inspector_detail") ||
-            currentRoute == Screen.ApkAnalyzer.route
 
     Scaffold(
         topBar = {
-            val statusBarPadding = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
-            Surface(
-                color = MaterialTheme.colorScheme.surface,
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(top = statusBarPadding)
-                        .height(44.dp)
-                        .padding(horizontal = 4.dp),
-                    contentAlignment = Alignment.Center
-                ) {
-                    if (canNavigateBack) {
-                        IconButton(
-                            onClick = { navController.popBackStack() },
-                            modifier = Modifier
-                                .align(Alignment.CenterStart)
-                                .size(40.dp)
-                        ) {
-                            Icon(
-                                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                                contentDescription = "Navigate back",
-                                modifier = Modifier.size(20.dp)
-                            )
-                        }
-                    }
-                    Text(
-                        text = currentTitle,
-                        style = MaterialTheme.typography.titleMedium.copy(
-                            fontWeight = FontWeight.SemiBold,
-                            fontSize = 17.sp
-                        ),
-                        color = MaterialTheme.colorScheme.onSurface,
-                        textAlign = TextAlign.Center
-                    )
-                }
-            }
+            UnifiedTopBar(
+                currentRoute = currentRoute,
+                onNavigateBack = { navController.popBackStack() }
+            )
         },
         bottomBar = {
             val bottomInsets = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()

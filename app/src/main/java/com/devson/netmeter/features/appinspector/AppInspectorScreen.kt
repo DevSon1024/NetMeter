@@ -1,6 +1,7 @@
 package com.devson.netmeter.features.appinspector
 
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -364,6 +365,10 @@ private fun AppListItemCard(
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(14.dp))
+            .border(
+                BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f)),
+                RoundedCornerShape(14.dp)
+            )
             .clickable(onClick = onAppSelected),
         shape = RoundedCornerShape(14.dp),
         colors = CardDefaults.elevatedCardColors(
@@ -377,14 +382,14 @@ private fun AppListItemCard(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 14.dp, vertical = 11.dp),
+                .padding(horizontal = 14.dp, vertical = 10.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             Surface(
-                shape = RoundedCornerShape(12.dp),
+                shape = RoundedCornerShape(10.dp),
                 color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.45f),
-                modifier = Modifier.size(46.dp)
+                modifier = Modifier.size(42.dp)
             ) {
                 Box(
                     modifier = Modifier.fillMaxSize(),
@@ -393,21 +398,21 @@ private fun AppListItemCard(
                     InspectorAppIcon(
                         packageName = app.packageName,
                         modifier = Modifier
-                            .size(38.dp)
-                            .clip(RoundedCornerShape(8.dp))
+                            .size(34.dp)
+                            .clip(RoundedCornerShape(6.dp))
                     )
                 }
             }
 
             Column(
                 modifier = Modifier.weight(1f),
-                verticalArrangement = Arrangement.spacedBy(3.dp)
+                verticalArrangement = Arrangement.spacedBy(2.dp)
             ) {
                 Text(
                     text = app.appName,
                     style = MaterialTheme.typography.titleMedium.copy(
                         fontWeight = FontWeight.SemiBold,
-                        fontSize = 15.sp
+                        fontSize = 14.5.sp
                     ),
                     color = MaterialTheme.colorScheme.onSurface,
                     maxLines = 1,
@@ -428,7 +433,7 @@ private fun AppListItemCard(
                             fontFamily = FontFamily.Monospace,
                             fontSize = 11.sp
                         ),
-                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.85f),
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
                         modifier = Modifier.weight(1f, fill = false)
@@ -438,7 +443,7 @@ private fun AppListItemCard(
                         imageVector = Icons.Default.ContentCopy,
                         contentDescription = "Copy package name",
                         tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.85f),
-                        modifier = Modifier.size(12.dp)
+                        modifier = Modifier.size(11.dp)
                     )
                 }
 
@@ -474,7 +479,8 @@ private fun AppListItemCard(
                     if (!app.versionName.isNullOrBlank()) {
                         Surface(
                             color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.6f),
-                            shape = RoundedCornerShape(4.dp)
+                            shape = RoundedCornerShape(4.dp),
+                            modifier = Modifier.weight(1f, fill = false)
                         ) {
                             Text(
                                 text = "v${app.versionName}",
@@ -483,9 +489,7 @@ private fun AppListItemCard(
                                     fontWeight = FontWeight.Medium
                                 ),
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                modifier = Modifier
-                                    .padding(horizontal = 5.dp, vertical = 1.5.dp)
-                                    .widthIn(max = 120.dp),
+                                modifier = Modifier.padding(horizontal = 5.dp, vertical = 1.5.dp),
                                 maxLines = 1,
                                 overflow = TextOverflow.Ellipsis
                             )
@@ -532,7 +536,7 @@ private fun AppListItemCard(
                 Icon(
                     imageVector = Icons.AutoMirrored.Filled.ArrowForward,
                     contentDescription = "View app details",
-                    tint = MaterialTheme.colorScheme.outlineVariant,
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.size(16.dp)
                 )
             }

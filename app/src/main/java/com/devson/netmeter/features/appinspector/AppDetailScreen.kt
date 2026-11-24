@@ -255,7 +255,7 @@ private fun AppDetailContent(
                                     text = detail.packageName,
                                     style = MaterialTheme.typography.bodySmall,
                                     fontFamily = FontFamily.Monospace,
-                                    color = MaterialTheme.colorScheme.outline
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
                                 IconButton(
                                     onClick = onCopyPackage,
@@ -559,7 +559,7 @@ private fun AppDetailContent(
                 Text(
                     text = "Reports permissions declared in the manifest via PackageManager. Major device capabilities (Camera, Storage, Vibration, etc.) are highlighted at the top.",
                     style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.outline
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
         }
@@ -733,7 +733,7 @@ private fun StorageStatsSection(
                     Text(
                         text = "Storage statistics unavailable: ${storageResult.reason}",
                         style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.outline
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
             }
@@ -823,7 +823,7 @@ private fun PermissionItemCard(permission: AppPermission) {
                 text = permission.name,
                 style = MaterialTheme.typography.bodySmall,
                 fontFamily = FontFamily.Monospace,
-                color = MaterialTheme.colorScheme.outline
+                color = MaterialTheme.colorScheme.onSurfaceVariant
             )
 
             if (!permission.description.isNullOrBlank()) {

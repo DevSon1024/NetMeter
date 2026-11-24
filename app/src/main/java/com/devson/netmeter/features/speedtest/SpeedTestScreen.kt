@@ -445,7 +445,7 @@ private fun MetricCard(
             Text(
                 text = subtitle,
                 style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.outline
+                color = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
     }
@@ -486,7 +486,7 @@ private fun ConnectionEndpointCard(
                     Text(
                         text = "Active Transport",
                         style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.outline
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
 
@@ -516,7 +516,7 @@ private fun ConnectionEndpointCard(
                     Text(
                         text = "Server Endpoint",
                         style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.outline
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
 
@@ -536,7 +536,7 @@ private fun ConnectionEndpointCard(
                 Text(
                     text = "Transfer Volume",
                     style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.outline
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
 
                 Text(
@@ -706,7 +706,7 @@ private fun TestHistorySection(
                     Icon(
                         imageVector = Icons.Default.DeleteSweep,
                         contentDescription = "Clear test history",
-                        tint = MaterialTheme.colorScheme.outline
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
             }
@@ -721,7 +721,7 @@ private fun TestHistorySection(
                     text = "No previous test results yet. Run a speed test to track connection performance over time.",
                     modifier = Modifier.padding(16.dp),
                     style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.outline,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                     textAlign = TextAlign.Center
                 )
             }
@@ -754,7 +754,7 @@ private fun HistoryRecordCard(record: SpeedTestRecord) {
                 Text(
                     text = "${FormatUtils.formatDate(record.timestampMillis)} at ${FormatUtils.formatTime(record.timestampMillis)}",
                     style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.outline
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
 
                 Surface(
@@ -780,7 +780,7 @@ private fun HistoryRecordCard(record: SpeedTestRecord) {
                     Text(
                         text = "Download",
                         style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.outline
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                     Text(
                         text = String.format(Locale.US, "%.1f Mbps", record.downloadMbps),
@@ -794,7 +794,7 @@ private fun HistoryRecordCard(record: SpeedTestRecord) {
                     Text(
                         text = "Upload",
                         style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.outline
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                     Text(
                         text = String.format(Locale.US, "%.1f Mbps", record.uploadMbps),
@@ -808,7 +808,7 @@ private fun HistoryRecordCard(record: SpeedTestRecord) {
                     Text(
                         text = "HTTP Latency",
                         style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.outline
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                     Text(
                         text = String.format(Locale.US, "%.0f ms", record.latencyMs),
@@ -822,7 +822,7 @@ private fun HistoryRecordCard(record: SpeedTestRecord) {
                     Text(
                         text = "Jitter",
                         style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.outline
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                     Text(
                         text = String.format(Locale.US, "%.1f ms", record.jitterMs),

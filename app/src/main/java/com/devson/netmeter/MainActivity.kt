@@ -20,8 +20,16 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             val themeMode by settingsViewModel.themeMode.collectAsStateWithLifecycle()
+            val palette by settingsViewModel.selectedPalette.collectAsStateWithLifecycle()
+            val isAmoled by settingsViewModel.isAmoledTheme.collectAsStateWithLifecycle()
+            val dynamicColor by settingsViewModel.dynamicColor.collectAsStateWithLifecycle()
 
-            NetMeterTheme(themeMode = themeMode) {
+            NetMeterTheme(
+                themeMode = themeMode,
+                palette = palette,
+                isAmoledTheme = isAmoled,
+                dynamicColor = dynamicColor
+            ) {
                 NetMeterApp(
                     settingsViewModel = settingsViewModel,
                     permissionViewModel = permissionViewModel
