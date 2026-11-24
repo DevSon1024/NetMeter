@@ -23,6 +23,7 @@ import androidx.navigation.NavType
 import androidx.navigation.navArgument
 import com.devson.netmeter.features.appinspector.AppDetailScreen
 import com.devson.netmeter.features.appinspector.AppInspectorScreen
+import com.devson.netmeter.features.apkanalyzer.ui.ApkAnalyzerScreen
 
 private val bottomNavRoutes = listOf(
     Screen.Dashboard.route,
@@ -155,7 +156,15 @@ fun AppNavigation(
                 viewModel = settingsViewModel,
                 onNavigateToInspector = {
                     navController.navigate(Screen.AppInspector.route)
+                },
+                onNavigateToApkAnalyzer = {
+                    navController.navigate(Screen.ApkAnalyzer.route)
                 }
+            )
+        }
+        composable(Screen.ApkAnalyzer.route) {
+            ApkAnalyzerScreen(
+                onNavigateBack = { navController.popBackStack() }
             )
         }
         composable(Screen.AppInspector.route) {

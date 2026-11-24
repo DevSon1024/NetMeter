@@ -25,6 +25,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
+import androidx.compose.material.icons.filled.Analytics
 import androidx.compose.material.icons.filled.ArrowDownward
 import androidx.compose.material.icons.filled.ArrowUpward
 import androidx.compose.material.icons.filled.BarChart
@@ -796,6 +797,13 @@ private fun NavigationShortcutsSection(
             subtitle = "Search installed packages, permissions, and storage info",
             icon = Icons.Default.Search,
             onClick = { onNavigate(Screen.AppInspector.route) }
+        )
+
+        ShortcutNavigationCard(
+            title = "APK Analyzer",
+            subtitle = "Inspect APK packages, permissions, DEX, and security offline",
+            icon = Icons.Default.Analytics,
+            onClick = { onNavigate(Screen.ApkAnalyzer.route) }
         )
     }
 }

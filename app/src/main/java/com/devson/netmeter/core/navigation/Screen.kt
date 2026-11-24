@@ -1,6 +1,7 @@
 package com.devson.netmeter.core.navigation
 
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Analytics
 import androidx.compose.material.icons.filled.DataUsage
 import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.NetworkCheck
@@ -60,6 +61,12 @@ sealed class Screen(
     ) {
         fun createRoute(packageName: String): String = "app_inspector_detail/${android.net.Uri.encode(packageName)}"
     }
+
+    data object ApkAnalyzer : Screen(
+        route = "apk_analyzer",
+        title = "APK Analyzer",
+        icon = Icons.Default.Analytics
+    )
 
     companion object {
         val bottomNavScreens: List<Screen>

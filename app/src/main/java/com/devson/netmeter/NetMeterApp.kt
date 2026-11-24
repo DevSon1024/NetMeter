@@ -57,9 +57,12 @@ fun NetMeterApp(
     val currentTitle = when {
         currentRoute == Screen.AppInspector.route -> Screen.AppInspector.title
         currentRoute.startsWith("app_inspector_detail") -> Screen.AppInspectorDetail.title
+        currentRoute == Screen.ApkAnalyzer.route -> Screen.ApkAnalyzer.title
         else -> (Screen.bottomNavScreens.find { it.route == currentRoute } ?: Screen.Dashboard).title
     }
-    val canNavigateBack = currentRoute == Screen.AppInspector.route || currentRoute.startsWith("app_inspector_detail")
+    val canNavigateBack = currentRoute == Screen.AppInspector.route ||
+            currentRoute.startsWith("app_inspector_detail") ||
+            currentRoute == Screen.ApkAnalyzer.route
 
     Scaffold(
         topBar = {
